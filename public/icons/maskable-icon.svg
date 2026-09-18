@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Shared home maskable app icon</title>
+  <rect width="512" height="512" fill="#176b5b"/>
+  <circle cx="256" cy="256" r="190" fill="#0f5549"/>
+  <path d="M126 253 256 142l130 111v128c0 23-19 42-42 42H168c-23 0-42-19-42-42V253Z" fill="#fff8eb"/>
+  <path d="M222 423V306c0-19 15-34 34-34s34 15 34 34v117h-68Z" fill="#f3bec0"/>
+</svg>

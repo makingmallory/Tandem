@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Shared home app icon</title>
+  <rect width="512" height="512" rx="116" fill="#176b5b"/>
+  <path d="M103 251 256 120l153 131v151c0 27-22 49-49 49H152c-27 0-49-22-49-49V251Z" fill="#fff8eb"/>
+  <path d="m154 249 102-87 102 87v144c0 9-7 16-16 16H170c-9 0-16-7-16-16V249Z" fill="#f3bec0"/>
+  <path d="M216 409V296c0-22 18-40 40-40s40 18 40 40v113h-80Z" fill="#176b5b"/>
+  <circle cx="274" cy="333" r="7" fill="#f4d77d"/>
+</svg>
