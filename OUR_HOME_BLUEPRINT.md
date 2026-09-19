@@ -46,7 +46,7 @@ The app should let them:
 - Create recurring chores.
 - Choose the frequency of a chore.
 - Choose the weekday(s) or recurrence rules for a chore.
-- Assign a chore to Mallory, Nik, Either, or Both.
+- Manage chores as shared household responsibilities that either member may complete.
 - Receive optional personal reminders.
 - Mark chores complete.
 - Instantly see when the other person completes something.
@@ -526,7 +526,7 @@ Example:
 > Scoop litter boxes  
 > Weekly  
 > Sundays  
-> Assigned to Mallory
+> Shared household chore
 
 A **chore occurrence** is one scheduled instance.
 
@@ -597,14 +597,8 @@ description text nullable
 icon_key text
 accent_key text
 
-assignment_mode text
-  member | either | both
-
-assigned_user_id uuid nullable
-  required when assignment_mode = member
-
 recurrence_type text
-  daily | weekly | interval_days | monthly
+  daily | interval_days | weekly | interval_weeks | monthly
 
 interval_count integer default 1
 
@@ -626,21 +620,12 @@ created_at timestamptz
 updated_at timestamptz
 ```
 
-### Assignment semantics
+### Shared ownership semantics
 
-`member`
-- one person is the expected owner
-- either household member is still allowed to complete it
-- actual completer is always recorded
-
-`either`
-- no single expected owner
-- first eligible completion satisfies the occurrence
-
-`both`
-- both household members have an individual completion state
-- occurrence is fully complete only after both have checked it off
-- UI may display `1/2 done`
+- Every chore belongs to the household, not an individual member.
+- Every household member can see, edit, pause, resume, and complete it.
+- The actual completer is recorded on the completion event, but is never the expected owner.
+- Personal reminder subscriptions do not create responsibility or ownership.
 
 ---
 
@@ -667,9 +652,7 @@ updated_at timestamptz
 unique(chore_id, scheduled_date)
 ```
 
-For `both` chores, overall `completed` should mean all required people completed it.
-
-For other modes, one valid completion completes it.
+One valid household-member completion completes the shared occurrence.
 
 ---
 
@@ -688,9 +671,7 @@ created_at timestamptz
 unique(occurrence_id, user_id)
 ```
 
-For `member` and `either`, normally there will be one row.
-
-For `both`, there may be two rows.
+Normally there will be one active completion row per occurrence. It records who completed the shared chore and when.
 
 ---
 
@@ -1061,9 +1042,7 @@ Do not send a reminder if:
 - chore is inactive
 - reminder is disabled
 
-For `both` chores:
-- once Mallory completes her part, stop Mallory's reminders
-- Nik's reminder may still fire until Nik completes his part
+Because completion belongs to the shared occurrence, completion by any household member suppresses later reminders for that occurrence. Reminder subscriptions themselves remain personal.
 
 ---
 
@@ -1461,7 +1440,6 @@ src/components/chore/
   ChoreCard
   ChoreIcon
   ChoreStatus
-  AssignmentBadge
   CompletionControl
   RecurrenceSummary
 ```
@@ -1509,7 +1487,7 @@ Small progress bar/ring.
 Each row contains:
 - icon tile
 - chore name
-- assignment
+- shared active/paused state
 - optional due/reminder time
 - status/completion control
 
@@ -1569,7 +1547,7 @@ Sections/filter options:
 Each chore row:
 - icon
 - name
-- assignment
+- active/paused state
 - human-readable recurrence
 - next due date
 - tap for details/edit
@@ -1591,16 +1569,11 @@ Form:
 1. Chore name
 2. Icon
 3. Accent color
-4. Assignment
-   - Mallory
-   - Nik
-   - Either
-   - Both
-5. Frequency
-6. Frequency-specific controls
-7. Optional reminder for current user
-8. Optional notes
-9. Create Chore button
+4. Frequency
+5. Frequency-specific controls
+6. Optional reminder for current user
+7. Optional notes
+8. Create Chore button
 
 ---
 
@@ -1655,7 +1628,7 @@ Content:
 
 - large icon + name
 - recurrence summary
-- assignment
+- active/paused state
 - next due date
 - current user's reminder
 - notes
@@ -1923,7 +1896,6 @@ Use a shared schema library such as Zod.
 Shared validation for:
 - chore names
 - recurrence
-- assignment
 - reminder times
 - household invite code inputs
 
@@ -1943,9 +1915,6 @@ Every Monday and Thursday
 Every 2 weeks on Saturday
 Every 3 days
 Monthly on the 1st
-Assigned to Mallory
-Either person
-Both of you
 Completed by Nik at 8:42 AM
 ```
 
@@ -1954,7 +1923,6 @@ Recommended files:
 ```text
 src/domain/formatters/
   recurrence.ts
-  assignment.ts
   dates.ts
 ```
 
@@ -2034,7 +2002,6 @@ src/
       ChoreRow.tsx
       ChoreCard.tsx
       ChoreIcon.tsx
-      AssignmentBadge.tsx
       CompletionControl.tsx
       RecurrenceSummary.tsx
 
@@ -2062,7 +2029,6 @@ src/
 
     formatters/
       recurrence.ts
-      assignment.ts
       dates.ts
 
   hooks/
@@ -2303,7 +2269,6 @@ Keep architecture compatible, but do not bloat v1.
 Possible later features:
 
 - points/streaks
-- random assignment rotation
 - chore claiming
 - recurring shopping tasks
 - shared grocery list
@@ -2335,8 +2300,8 @@ V1 is successful when:
 5. Either can create/edit a recurring chore.
 6. Chores appear on correct days.
 7. Each can see Today and Week views.
-8. Chores can be assigned to Mallory, Nik, Either, or Both.
-9. Either can mark an occurrence complete.
+8. Chores are shared by the household and do not display a responsible person.
+9. Either household member can mark an occurrence complete.
 10. The other phone receives the state change live while open.
 11. Completion records who and when.
 12. Completed items remain visually visible for the day.
@@ -2364,9 +2329,7 @@ Prioritize pure business logic:
 - every-N-weeks weekday calculation
 - rescheduling behavior
 - early completion targeting
-- completion requirement for `both`
 - recurrence formatter
-- assignment formatter
 
 ## Integration tests
 
@@ -2431,8 +2394,6 @@ Chore:
   "name": "Scoop litter boxes",
   "icon_key": "paw",
   "accent_key": "rose",
-  "assignment_mode": "member",
-  "assigned_user_id": "mallory-id",
   "recurrence_type": "weekly",
   "interval_count": 1,
   "weekdays": [0]
@@ -2478,13 +2439,10 @@ Good:
 - "Nice! One less thing."
 - "Nik finished Take trash out."
 - "Remind me"
-- "Either of us"
-- "Both of us"
 
 Avoid:
 - "Task execution successful"
 - "Resource updated"
-- "Assignment entity"
 - corporate project-management language
 
 ---
@@ -2495,15 +2453,15 @@ Use seed/dev fixtures only, not hardcoded production data.
 
 Examples:
 
-- Scoop litter boxes — Sunday — Mallory — paw
-- Take trash out — Monday — Nik — trash
-- Wipe kitchen counters — daily — Either — sparkle
-- Water plants — Wednesday/Sunday — Either — leaf
-- Change sheets — every 2 weeks Saturday — Both — bed
-- Clean bathroom — Saturday — Nik — bathtub
-- Vacuum downstairs — Friday — Either — vacuum
+- Scoop litter boxes — Sunday — paw
+- Take trash out — Monday — trash
+- Wipe kitchen counters — daily — sparkle
+- Water plants — Wednesday/Sunday — leaf
+- Change sheets — every 2 weeks Saturday — bed
+- Clean bathroom — Saturday — bathtub
+- Vacuum downstairs — Friday — vacuum
 
-These create enough variety to test recurrence and assignment modes.
+These create enough variety to test recurrence modes and shared household management.
 
 ---
 
@@ -2570,7 +2528,7 @@ Tasks:
 - edit form
 - icon registry
 - accent registry
-- assignment UX
+- shared active/paused management UX
 - recurrence input UX
 
 Exit criteria:
@@ -2600,7 +2558,7 @@ Recurring chores reliably appear on expected dates.
 Tasks:
 - occurrence completions
 - completion/undo
-- both-person completion
+- shared-occurrence completion
 - skip
 - reschedule
 - activity events
@@ -2826,6 +2784,10 @@ Reliable recurrence, history, rescheduling, skipping, and early completion all r
 ### Decision: reminders are per-user
 Reason:
 Shared chore does not imply shared notification preferences.
+
+### Decision: chores are shared and never assigned
+Reason:
+Tandem is a shared household system, not a responsibility-assignment system. Every member may manage or complete any chore. The app records the actual completer later, while personal reminder subscriptions remain independent and never imply ownership.
 
 ### Decision: completed chores remain visible
 Reason:

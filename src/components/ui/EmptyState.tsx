@@ -4,9 +4,10 @@ import { Card } from "@/components/ui/Card";
 type EmptyStateProps = {
   title: string;
   description: string;
+  action?: React.ReactNode;
 };
 
-export function EmptyState({ title, description }: Readonly<EmptyStateProps>) {
+export function EmptyState({ title, description, action }: Readonly<EmptyStateProps>) {
   return (
     <Card className="state-card">
       <span className="state-card__icon">
@@ -14,6 +15,7 @@ export function EmptyState({ title, description }: Readonly<EmptyStateProps>) {
       </span>
       <h2 className="state-card__title">{title}</h2>
       <p className="state-card__copy">{description}</p>
+      {action}
     </Card>
   );
 }
