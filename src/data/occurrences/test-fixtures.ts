@@ -16,6 +16,7 @@ export function occurrenceFixture(
     is_rescheduled: false,
     created_at: "2026-09-18T12:00:00Z",
     updated_at: "2026-09-18T12:00:00Z",
+    completion: null,
     chore: {
       id: `20000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
       name: ["Wipe kitchen counters", "Water plants", "Take trash out"][index % 3]!,
@@ -32,9 +33,23 @@ export function occurrenceFixture(
 
 export function homeOccurrenceFixtures(today: DateOnly) {
   return {
-    today: [occurrenceFixture(today, 0), occurrenceFixture(today, 1)],
+    today: [
+      occurrenceFixture(today, 0),
+      occurrenceFixture(today, 1, {
+        status: "completed",
+        completion: {
+          id: "30000000-0000-4000-8000-000000000001",
+          occurrence_id: "00000000-0000-4000-8000-000000000001",
+          household_id: "10000000-0000-4000-8000-000000000001",
+          user_id: "40000000-0000-4000-8000-000000000001",
+          completed_at: "2026-09-18T13:42:00Z",
+          created_at: "2026-09-18T13:42:00Z",
+          completer: { id: "40000000-0000-4000-8000-000000000001", display_name: "Nik", avatar_key: null },
+        },
+      }),
+      occurrenceFixture(today, 2, { status: "skipped" }),
+    ],
     overdue: [occurrenceFixture(addDays(today, -1), 2)],
     upcoming: [occurrenceFixture(addDays(today, 2), 1), occurrenceFixture(addDays(today, 4), 2)],
   };
 }
-

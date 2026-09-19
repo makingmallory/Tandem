@@ -18,7 +18,9 @@ test("root page headers share typography, alignment, and position", async ({ pag
 
   for (const route of ROOT_ROUTES) {
     await page.goto(route);
-    const title = page.getByTestId("page-header-title");
+    // Next can briefly retain the route loading fallback while streaming the
+    // final header. Measure only the settled page header.
+    const title = page.getByTestId("page-header-title").filter({ hasNotText: "Loading your home" });
     await expect(title).toBeVisible();
 
     results.push(

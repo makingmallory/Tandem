@@ -201,6 +201,80 @@ export type Database = {
           },
         ];
       };
+      occurrence_completions: {
+        Row: {
+          id: string;
+          occurrence_id: string;
+          household_id: string;
+          user_id: string;
+          completed_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          occurrence_id: string;
+          household_id: string;
+          user_id: string;
+          completed_at?: string;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "occurrence_completions_occurrence_household_fkey";
+            columns: ["occurrence_id", "household_id"];
+            isOneToOne: false;
+            referencedRelation: "chore_occurrences";
+            referencedColumns: ["id", "household_id"];
+          },
+          {
+            foreignKeyName: "occurrence_completions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      activity_events: {
+        Row: {
+          id: string;
+          household_id: string;
+          actor_user_id: string | null;
+          event_type: "chore_completed" | "chore_uncompleted" | "chore_skipped" | "chore_rescheduled";
+          chore_id: string | null;
+          occurrence_id: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          household_id: string;
+          actor_user_id?: string | null;
+          event_type: "chore_completed" | "chore_uncompleted" | "chore_skipped" | "chore_rescheduled";
+          chore_id?: string | null;
+          occurrence_id?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "activity_events_actor_user_id_fkey";
+            columns: ["actor_user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "activity_events_chore_id_fkey";
+            columns: ["chore_id"];
+            isOneToOne: false;
+            referencedRelation: "chores";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<never, never>;
     Functions: {
@@ -256,6 +330,22 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["chores"]["Row"][];
       };
+      complete_occurrence: {
+        Args: { p_occurrence_id: string; p_household_id: string };
+        Returns: Database["public"]["Tables"]["occurrence_completions"]["Row"][];
+      };
+      undo_occurrence_completion: {
+        Args: { p_occurrence_id: string; p_household_id: string };
+        Returns: Database["public"]["Tables"]["chore_occurrences"]["Row"][];
+      };
+      skip_occurrence: {
+        Args: { p_occurrence_id: string; p_household_id: string };
+        Returns: Database["public"]["Tables"]["chore_occurrences"]["Row"][];
+      };
+      reschedule_occurrence: {
+        Args: { p_occurrence_id: string; p_household_id: string; p_scheduled_date: string };
+        Returns: Database["public"]["Tables"]["chore_occurrences"]["Row"][];
+      };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
@@ -267,3 +357,5 @@ export type HouseholdRow = Database["public"]["Tables"]["households"]["Row"];
 export type HouseholdMemberRow = Database["public"]["Tables"]["household_members"]["Row"];
 export type ChoreRow = Database["public"]["Tables"]["chores"]["Row"];
 export type ChoreOccurrenceRow = Database["public"]["Tables"]["chore_occurrences"]["Row"];
+export type OccurrenceCompletionRow = Database["public"]["Tables"]["occurrence_completions"]["Row"];
+export type ActivityEventRow = Database["public"]["Tables"]["activity_events"]["Row"];

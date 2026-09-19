@@ -14,6 +14,7 @@ import { todayDateOnly } from "@/domain/dates/date-only";
 import { formatLongDate } from "@/domain/formatters/dates";
 import { occurrenceHorizonEnd } from "@/domain/recurrence/generateOccurrences";
 import { isShellTestMode } from "@/lib/test-mode";
+import { occurrenceProgress, sortOccurrencesForToday } from "@/domain/occurrences/progress";
 
 export default async function HomePage() {
   const today = todayDateOnly(new Date(), HOUSEHOLD_TIME_ZONE);
@@ -28,8 +29,9 @@ export default async function HomePage() {
       getOverdueOccurrences(household.id, today),
       getUpcomingOccurrences(household.id, today, occurrenceHorizonEnd(today)),
     ]);
-    occurrences = { today: todayItems.filter((item) => item.status === "scheduled"), overdue, upcoming };
+    occurrences = { today: sortOccurrencesForToday(todayItems), overdue, upcoming };
   }
+  const progress = occurrenceProgress(occurrences.today);
 
   return (
     <PageShell
@@ -53,9 +55,12 @@ export default async function HomePage() {
             <div>
               <p className="eyebrow">On the list</p>
               <p className="progress-card__value">
-                {occurrences.today.length} {occurrences.today.length === 1 ? "chore" : "chores"} today
+                {progress.completed} of {progress.total} done
               </p>
             </div>
+          </div>
+          <div className="progress-track" aria-label={`${progress.completed} of ${progress.total} chores done`}>
+            <span style={{ width: progress.total ? `${(progress.completed / progress.total) * 100}%` : "0%" }} />
           </div>
           <p className="muted-copy">{occurrences.overdue.length} overdue · {occurrences.upcoming.length} coming up</p>
         </Card>

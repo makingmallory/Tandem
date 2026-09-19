@@ -26,3 +26,10 @@ export function formatDayNumber(value: DateOnly) {
   return String(dateOnlyParts(value).day);
 }
 
+export function formatTime(value: string, timeZone: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+  }).format(new Date(value));
+}
