@@ -15,6 +15,7 @@ import { formatLongDate } from "@/domain/formatters/dates";
 import { occurrenceHorizonEnd } from "@/domain/recurrence/generateOccurrences";
 import { isShellTestMode } from "@/lib/test-mode";
 import { occurrenceProgress, sortOccurrencesForToday } from "@/domain/occurrences/progress";
+import { InstallPromptCard } from "@/components/pwa/InstallPromptCard";
 
 export default async function HomePage() {
   const today = todayDateOnly(new Date(), HOUSEHOLD_TIME_ZONE);
@@ -45,6 +46,7 @@ export default async function HomePage() {
       }
     >
       <div className="page-stack">
+        <InstallPromptCard />
         <div>
           <p className="eyebrow">Today at home</p>
           <p className="today-date">{formatLongDate(today)}</p>

@@ -14,15 +14,19 @@ import { HOUSEHOLD_TIME_ZONE } from "@/config/time";
 import { todayDateOnly, type DateOnly } from "@/domain/dates/date-only";
 import { formatMonthDay, formatTime } from "@/domain/formatters/dates";
 import { formatRecurrence } from "@/domain/formatters/recurrence";
+import { getCurrentUser } from "@/data/auth/queries";
+import { getPersonalChoreReminder } from "@/data/reminders/queries";
+import { ReminderForm } from "@/components/reminder/ReminderForm";
 
 export default async function ChoreDetailsPage({
   params,
 }: Readonly<{ params: Promise<{ id: string }> }>) {
-  const [{ id }, household] = await Promise.all([params, getCurrentHousehold()]);
-  if (!household) redirect("/setup");
-  const [chore, occurrenceSummary] = await Promise.all([
+  const [{ id }, household, user] = await Promise.all([params, getCurrentHousehold(), getCurrentUser()]);
+  if (!household || !user) redirect("/setup");
+  const [chore, occurrenceSummary, reminder] = await Promise.all([
     getChore(household.id, id),
     getChoreOccurrenceSummary(household.id, id),
+    getPersonalChoreReminder(household.id, id, user.id),
   ]);
   if (!chore) notFound();
   const today = todayDateOnly(new Date(), HOUSEHOLD_TIME_ZONE);
@@ -54,6 +58,8 @@ export default async function ChoreDetailsPage({
             <p>{recurrence}</p>
           </div>
         </Card>
+
+        <Card><ReminderForm choreId={chore.id} reminder={reminder} fallbackTimeZone={HOUSEHOLD_TIME_ZONE} /></Card>
 
         <Card className="definition-card">
           <div>

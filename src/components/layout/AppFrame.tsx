@@ -1,6 +1,7 @@
 import { BottomNav } from "@/components/layout/BottomNav";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { RealtimeHouseholdProvider } from "@/components/providers/RealtimeHouseholdProvider";
+import { ServiceWorkerRegistrar } from "@/components/providers/ServiceWorkerRegistrar";
 
 type AppFrameProps = {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ export function AppFrame({ children, showNavigation = true, householdId = null }
 
   return (
     <QueryProvider>
+      <ServiceWorkerRegistrar />
       {householdId ? <RealtimeHouseholdProvider householdId={householdId}>{frame}</RealtimeHouseholdProvider> : frame}
     </QueryProvider>
   );

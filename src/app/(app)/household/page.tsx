@@ -1,4 +1,4 @@
-import { KeyRound, UserRound } from "lucide-react";
+import { Bell, KeyRound, UserRound } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SignOutButton } from "@/components/auth/SignOutButton";
@@ -46,6 +46,14 @@ export default async function HouseholdPage() {
         </section>
 
         <InviteCard inviteCode={household.invite_code} />
+
+        <Card className="section-stack">
+          <div className="choice-card__heading">
+            <span className="choice-card__icon"><Bell aria-hidden="true" size={22} /></span>
+            <div><p className="eyebrow">Notifications</p><p className="choice-card__title">Personal reminder settings</p></div>
+          </div>
+          <Link className="app-button app-button--secondary" href="/settings/notifications">Open notification settings</Link>
+        </Card>
 
         <Card className="section-stack">
           <div className="choice-card__heading">

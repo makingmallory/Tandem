@@ -1220,6 +1220,54 @@ select {
   transition: width 180ms ease;
 }
 
+.install-card,
+.notification-status-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.install-card .button-row {
+  grid-column: 1 / -1;
+}
+
+.install-card .muted-copy {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.reminder-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.toggle-row {
+  display: flex;
+  min-height: var(--touch-target);
+  gap: var(--space-3);
+  align-items: center;
+  font-weight: var(--weight-bold);
+}
+
+.toggle-row input {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--color-brand);
+}
+
+.field-label {
+  display: grid;
+  gap: var(--space-2);
+  font-size: var(--type-body-small-size);
+  font-weight: var(--weight-bold);
+}
+
+.notification-status-card .state-card__icon {
+  grid-row: 1;
+}
+
 @media (min-width: 40rem) {
   .app-frame {
     min-height: calc(100svh - var(--space-8));

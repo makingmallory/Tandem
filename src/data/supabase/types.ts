@@ -275,6 +275,46 @@ export type Database = {
           },
         ];
       };
+      chore_reminders: {
+        Row: {
+          id: string; household_id: string; chore_id: string; user_id: string;
+          enabled: boolean; reminder_type: "due_time"; local_time: string; timezone: string;
+          created_at: string; updated_at: string;
+        };
+        Insert: {
+          id?: string; household_id: string; chore_id: string; user_id: string;
+          enabled?: boolean; reminder_type?: "due_time"; local_time: string; timezone: string;
+          created_at?: string; updated_at?: string;
+        };
+        Update: { enabled?: boolean; local_time?: string; timezone?: string; updated_at?: string };
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: {
+          id: string; user_id: string; endpoint: string; p256dh: string; auth: string;
+          device_label: string | null; user_agent: string | null; created_at: string; last_seen_at: string;
+        };
+        Insert: {
+          id?: string; user_id: string; endpoint: string; p256dh: string; auth: string;
+          device_label?: string | null; user_agent?: string | null; created_at?: string; last_seen_at?: string;
+        };
+        Update: { p256dh?: string; auth?: string; device_label?: string | null; user_agent?: string | null; last_seen_at?: string };
+        Relationships: [];
+      };
+      reminder_deliveries: {
+        Row: {
+          id: string; reminder_id: string; occurrence_id: string; user_id: string; scheduled_for: string;
+          status: "pending" | "sent" | "suppressed" | "failed"; attempted_at: string | null;
+          delivered_at: string | null; error_message: string | null; created_at: string; updated_at: string;
+        };
+        Insert: {
+          id?: string; reminder_id: string; occurrence_id: string; user_id: string; scheduled_for: string;
+          status?: "pending" | "sent" | "suppressed" | "failed"; attempted_at?: string | null;
+          delivered_at?: string | null; error_message?: string | null; created_at?: string; updated_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<never, never>;
     Functions: {
@@ -346,6 +386,18 @@ export type Database = {
         Args: { p_occurrence_id: string; p_household_id: string; p_scheduled_date: string };
         Returns: Database["public"]["Tables"]["chore_occurrences"]["Row"][];
       };
+      upsert_chore_reminder: {
+        Args: { p_household_id: string; p_chore_id: string; p_enabled: boolean; p_reminder_type: string; p_local_time: string; p_timezone: string };
+        Returns: Database["public"]["Tables"]["chore_reminders"]["Row"][];
+      };
+      register_push_subscription: {
+        Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_device_label: string; p_user_agent: string };
+        Returns: Database["public"]["Tables"]["push_subscriptions"]["Row"][];
+      };
+      remove_push_subscription: {
+        Args: { p_endpoint: string };
+        Returns: boolean;
+      };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
@@ -359,3 +411,6 @@ export type ChoreRow = Database["public"]["Tables"]["chores"]["Row"];
 export type ChoreOccurrenceRow = Database["public"]["Tables"]["chore_occurrences"]["Row"];
 export type OccurrenceCompletionRow = Database["public"]["Tables"]["occurrence_completions"]["Row"];
 export type ActivityEventRow = Database["public"]["Tables"]["activity_events"]["Row"];
+export type ChoreReminderRow = Database["public"]["Tables"]["chore_reminders"]["Row"];
+export type PushSubscriptionRow = Database["public"]["Tables"]["push_subscriptions"]["Row"];
+export type ReminderDeliveryRow = Database["public"]["Tables"]["reminder_deliveries"]["Row"];
