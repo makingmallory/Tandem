@@ -11,5 +11,8 @@ describe("push service worker", () => {
     expect(source).toContain('addEventListener("notificationclick"');
     expect(source).toContain("clients.openWindow(target.href)");
     expect(source).toContain("target.origin !== self.location.origin");
+    expect(source).toContain('event.request.mode !== "navigate"');
+    expect(source).not.toContain("cache.put(event.request");
+    expect(source).not.toContain("caches.match(event.request");
   });
 });

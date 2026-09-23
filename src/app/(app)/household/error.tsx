@@ -3,10 +3,11 @@
 import { PageShell } from "@/components/layout/PageShell";
 import { ErrorState } from "@/components/ui/ErrorState";
 
-export default function HouseholdError({ reset }: Readonly<{ error: Error; reset: () => void }>) {
+export default function HouseholdError({ error, reset }: Readonly<{ error: Error; reset: () => void }>) {
   return (
-    <PageShell title="Household" variant="root">
+    <PageShell title="Settings" variant="root">
       <ErrorState
+        error={error}
         description="We could not load your household. Check your connection and try again."
         onRetry={reset}
       />

@@ -1,5 +1,5 @@
 const OFFLINE_URL = "/offline.html";
-const STATIC_CACHE = "tandem-shell-v1";
+const STATIC_CACHE = "tandem-shell-v2";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll([
@@ -18,6 +18,8 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  // Authenticated pages and data stay network-only. Only failed document
+  // navigations receive the pre-cached, non-personalized offline page.
   if (event.request.mode !== "navigate") return;
   event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_URL)));
 });

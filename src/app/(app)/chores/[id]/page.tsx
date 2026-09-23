@@ -15,7 +15,7 @@ import { todayDateOnly, type DateOnly } from "@/domain/dates/date-only";
 import { formatMonthDay, formatTime } from "@/domain/formatters/dates";
 import { formatRecurrence } from "@/domain/formatters/recurrence";
 import { getCurrentUser } from "@/data/auth/queries";
-import { getPersonalChoreReminder } from "@/data/reminders/queries";
+import { getPersonalChoreReminders } from "@/data/reminders/queries";
 import { ReminderForm } from "@/components/reminder/ReminderForm";
 
 export default async function ChoreDetailsPage({
@@ -26,7 +26,7 @@ export default async function ChoreDetailsPage({
   const [chore, occurrenceSummary, reminder] = await Promise.all([
     getChore(household.id, id),
     getChoreOccurrenceSummary(household.id, id),
-    getPersonalChoreReminder(household.id, id, user.id),
+    getPersonalChoreReminders(household.id, id, user.id),
   ]);
   if (!chore) notFound();
   const today = todayDateOnly(new Date(), HOUSEHOLD_TIME_ZONE);
@@ -59,7 +59,15 @@ export default async function ChoreDetailsPage({
           </div>
         </Card>
 
-        <Card><ReminderForm choreId={chore.id} reminder={reminder} fallbackTimeZone={HOUSEHOLD_TIME_ZONE} /></Card>
+        <Card>
+          <ReminderForm
+            choreId={chore.id}
+            reminders={reminder}
+            fallbackTimeZone={HOUSEHOLD_TIME_ZONE}
+            recurrenceType={chore.recurrence_type}
+            intervalCount={chore.interval_count}
+          />
+        </Card>
 
         <Card className="definition-card">
           <div>

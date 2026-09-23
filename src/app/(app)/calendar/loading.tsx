@@ -6,9 +6,8 @@ export default function CalendarLoading() {
     <PageShell title="Calendar" variant="root">
       <div className="page-stack">
         <LoadingState label="Loading week" />
-        <LoadingState label="Loading scheduled chores" />
+        <LoadingState label="Loading scheduled chores" variant="list" rows={2} />
       </div>
     </PageShell>
   );
 }
-

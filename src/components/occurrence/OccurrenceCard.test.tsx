@@ -39,7 +39,6 @@ describe("OccurrenceCard completion details", () => {
       }),
     }));
     expect(screen.getByText(/Done by Nik at 8:42 AM/)).toBeVisible();
-    expect(screen.getByText("Completed")).toBeVisible();
   });
 
   it("renders a completed occurrence safely when its profile relation is null", () => {

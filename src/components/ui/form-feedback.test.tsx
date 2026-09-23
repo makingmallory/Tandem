@@ -43,4 +43,12 @@ describe("shared form feedback", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("An account already uses that email address.");
     expect(screen.queryByText("Please check the highlighted fields.")).not.toBeInTheDocument();
   });
+
+  it("uses neutral feedback for an intentionally disabled setting", () => {
+    render(<FormMessage state={{ status: "success", tone: "neutral", successMessage: "Reminder off." }} />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Reminder off.");
+    expect(screen.getByRole("status")).toHaveClass("form-message--neutral");
+    expect(screen.getByRole("status")).not.toHaveClass("form-message--success");
+  });
 });

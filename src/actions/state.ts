@@ -1,5 +1,6 @@
 export type ActionState = {
   status: "idle" | "error" | "success";
+  tone?: "success" | "neutral";
   fieldErrors?: Record<string, string[]>;
   formError?: string;
   successMessage?: string;
@@ -24,6 +25,6 @@ export function formErrorState(formError: string): ActionState {
   return { status: "error", formError };
 }
 
-export function successState(successMessage: string): ActionState {
-  return { status: "success", successMessage };
+export function successState(successMessage: string, tone: ActionState["tone"] = "success"): ActionState {
+  return { status: "success", successMessage, tone };
 }

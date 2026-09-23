@@ -1,4 +1,4 @@
-# Supabase setup for Phase 1
+# Supabase setup
 
 This setup uses a Supabase Free project and its public publishable key. It does not require a paid
 email provider, service-role key, custom domain, or billing information.
@@ -30,8 +30,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 Some older projects show a legacy **anon/public** key instead. In that case, leave the publishable
 key blank and put the legacy key in `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
-Never copy the `service_role`, secret, or database password into a `NEXT_PUBLIC_*` variable. This
-Phase 1 app does not need a service-role key at all.
+Never copy the `service_role`, secret, or database password into a `NEXT_PUBLIC_*` variable. The
+Next.js app does not need a service-role key. Supabase supplies it directly to the deployed reminder
+Edge Function; never add it to Vercel.
 
 ## 3. Apply the repository migration
 
@@ -46,7 +47,7 @@ npx supabase db push
 - The project ref is the portion before `.supabase.co` in the Project URL.
 - The browser login authorizes the CLI to manage only projects your Supabase account can access.
 - `supabase link` may ask for the database password created in step 1.
-- `supabase db push` applies `supabase/migrations/20260918160000_phase1_auth_households.sql`.
+- `supabase db push` applies all repository migrations in order.
 
 After the push, open **Table Editor** in Supabase. Confirm these tables exist:
 
@@ -109,14 +110,6 @@ The suite verifies that an outsider cannot read or update another household, a v
 membership, fellow members become visible, malformed invites reveal nothing, and a user cannot
 join or create a second active household.
 
-## 7. Vercel deployment values
+## 7. Vercel deployment
 
-When deploying on Vercel Hobby, add the same two public variables under **Project Settings →
-Environment Variables** for Production, Preview, and Development:
-
-```text
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-```
-
-Redeploy after saving them. Do not add a service-role key. The free `*.vercel.app` URL is sufficient.
+Follow [`VERCEL_DEPLOYMENT.md`](./VERCEL_DEPLOYMENT.md). The free `*.vercel.app` URL is sufficient.

@@ -10,6 +10,8 @@ describe("push delivery architecture", () => {
     expect(source).toContain("statusCode === 404 || statusCode === 410");
     expect(source).toContain('occurrence?.status !== "scheduled"');
     expect(source).toContain("!chore?.is_active");
+    expect(source).toContain("claim.offset_value === 0");
+    expect(source).toContain("is due in ${claim.offset_value}");
     expect(source).not.toMatch(/assigned|assignee|responsible/i);
   });
 });

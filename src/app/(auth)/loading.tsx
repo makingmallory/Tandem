@@ -1,10 +1,11 @@
 import { PageShell } from "@/components/layout/PageShell";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { APP_BRAND } from "@/config/brand";
 
 export default function AuthLoading() {
   return (
-    <PageShell title="Welcome home" variant="root">
-      <LoadingState label="Loading sign in" />
+    <PageShell title={APP_BRAND.name} subtitle={APP_BRAND.tagline} variant="root">
+      <LoadingState label="Loading sign in" variant="form" />
     </PageShell>
   );
 }

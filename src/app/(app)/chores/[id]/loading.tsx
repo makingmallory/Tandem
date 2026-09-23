@@ -4,7 +4,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 export default function ChoreDetailsLoading() {
   return (
     <PageShell title="Chore Details" variant="detail" backHref="/chores">
-      <LoadingState label="Loading chore" />
+      <LoadingState label="Loading chore" rows={3} />
     </PageShell>
   );
 }

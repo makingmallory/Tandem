@@ -21,7 +21,14 @@ type Subscription = { id: string; endpoint: string; p256dh: string; auth: string
 type Claim = {
   delivery_id: string; reminder_id: string; occurrence_id: string; user_id: string;
   chore_id: string; chore_name: string; scheduled_date: string; scheduled_for: string;
+  offset_value: number; offset_unit: "day" | "week" | "month";
 };
+
+function reminderBody(claim: Claim) {
+  if (claim.offset_value === 0) return `${claim.chore_name} is due today`;
+  const unit = `${claim.offset_unit}${claim.offset_value === 1 ? "" : "s"}`;
+  return `${claim.chore_name} is due in ${claim.offset_value} ${unit}`;
+}
 
 async function sendToSubscriptions(userId: string, payload: Record<string, string>) {
   const { data, error } = await admin.from("push_subscriptions")
@@ -59,7 +66,7 @@ async function processClaim(claim: Claim) {
   }
   const sent = await sendToSubscriptions(claim.user_id, {
     title: pushTitle,
-    body: `${claim.chore_name} is on today's list`,
+    body: reminderBody(claim),
     url: `/chores/${claim.chore_id}`,
     tag: `reminder-${claim.reminder_id}-${claim.occurrence_id}`,
   });

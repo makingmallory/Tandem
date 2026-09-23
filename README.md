@@ -1,12 +1,12 @@
-# Shared home PWA
+# Tandem
 
-Phase 0 establishes the reusable application shell described in
-[`OUR_HOME_BLUEPRINT.md`](./OUR_HOME_BLUEPRINT.md). Product naming and visible brand copy come from
-`src/config/brand.ts`; future renames should begin there.
+Tandem is a private, mobile-first shared chore PWA. Phases 0–5 provide the shared application shell,
+Supabase authentication and household isolation, recurring chores and occurrences, completion and
+history with Realtime updates, and personal Web Push reminders. Phase 6 hardens accessibility,
+responsive behavior, loading/error states, and production deployment.
 
-Phase 1 adds Supabase email/password authentication, one active household per user, invite-code
-joining, and database-enforced household isolation. Follow the beginner-friendly
-[`docs/SUPABASE_SETUP.md`](./docs/SUPABASE_SETUP.md) guide before running the authenticated app.
+[`OUR_HOME_BLUEPRINT.md`](./OUR_HOME_BLUEPRINT.md) is the product and architecture source of truth.
+Visible brand copy comes from `src/config/brand.ts`; future renames should begin there.
 
 ## Local development
 
@@ -32,13 +32,16 @@ Chromium once per machine:
 npx playwright install chromium
 ```
 
-No paid service, cloud account, environment variable, or custom domain is required for Phase 0.
+Production setup remains compatible with Supabase Free and Vercel Hobby. A custom domain and paid
+notification provider are not required. See [`docs/VERCEL_DEPLOYMENT.md`](./docs/VERCEL_DEPLOYMENT.md)
+for the exact deployment checklist and [`docs/PHASE5_PUSH_SETUP.md`](./docs/PHASE5_PUSH_SETUP.md) for
+the already-established reminder backend.
 
 ## Database checks
 
-`npm test` runs the Phase 1 migration inside embedded PostgreSQL and verifies the critical RLS
-member/outsider cases without Docker. The repository also includes the official Supabase pgTAP
-suite at `supabase/tests/phase1_household_rls.test.sql`. With Docker running:
+`npm test` runs unit, component, and embedded PostgreSQL integration coverage for the migrations and
+critical RLS member/outsider cases without Docker. The repository also includes Supabase-native
+pgTAP coverage. With Docker running:
 
 ```bash
 npm run db:start

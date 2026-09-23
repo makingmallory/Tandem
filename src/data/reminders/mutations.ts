@@ -3,14 +3,18 @@ import type { ReminderInput } from "@/lib/validation/reminder";
 
 export async function savePersonalReminder(householdId: string, choreId: string, input: ReminderInput) {
   const supabase = await createSupabaseServerClient();
-  return supabase.rpc("upsert_chore_reminder", {
+  return supabase.rpc("upsert_chore_reminder_v2", {
     p_household_id: householdId,
     p_chore_id: choreId,
     p_enabled: input.enabled,
     p_reminder_type: input.reminderType,
-    p_local_time: input.localTime,
     p_timezone: input.timezone,
-  }).single();
+    p_reminders: input.reminders.map((reminder) => ({
+      offset_value: reminder.offsetValue,
+      offset_unit: reminder.offsetUnit,
+      local_time: reminder.localTime,
+    })),
+  });
 }
 
 export type PushSubscriptionInput = {

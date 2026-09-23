@@ -3,13 +3,14 @@
 import { PageShell } from "@/components/layout/PageShell";
 import { ErrorState } from "@/components/ui/ErrorState";
 
-export default function GlobalError({ reset }: Readonly<{ error: Error; reset: () => void }>) {
+export default function GlobalError({ error, reset }: Readonly<{ error: Error; reset: () => void }>) {
   return (
     <html lang="en">
       <body>
         <div className="app-frame app-frame--without-nav">
           <PageShell title="Let’s try that again" variant="root">
             <ErrorState
+              error={error}
               description="The app could not reach a required service. Check your connection and configuration, then try again."
               onRetry={reset}
             />

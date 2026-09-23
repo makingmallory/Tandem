@@ -1,10 +1,8 @@
-import { Settings2 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { OccurrenceCard } from "@/components/occurrence/OccurrenceCard";
 import { PageShell } from "@/components/layout/PageShell";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { IconButton } from "@/components/ui/IconButton";
 import { APP_BRAND } from "@/config/brand";
 import { HOUSEHOLD_TIME_ZONE } from "@/config/time";
 import { getCurrentHousehold } from "@/data/household/queries";
@@ -39,11 +37,6 @@ export default async function HomePage() {
       title={APP_BRAND.name}
       subtitle={APP_BRAND.tagline}
       variant="root"
-      actions={
-        <IconButton href="/household" label="Open household settings">
-          <Settings2 aria-hidden="true" size={21} strokeWidth={2.2} />
-        </IconButton>
-      }
     >
       <div className="page-stack">
         <InstallPromptCard />

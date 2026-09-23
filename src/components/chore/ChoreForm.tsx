@@ -84,7 +84,7 @@ export function ChoreForm({ action, initialValues, mode }: Readonly<ChoreFormPro
       </Card>
 
       <Card className="chore-form__section">
-        <fieldset className="picker-fieldset">
+        <fieldset className="picker-fieldset" aria-describedby={state.fieldErrors?.iconKey?.[0] ? "icon-picker-error" : undefined}>
           <legend className="field-label">Choose an icon</legend>
           <div className="icon-picker">
             {CHORE_ICONS.map(({ key, label, icon: Icon }) => (
@@ -104,10 +104,10 @@ export function ChoreForm({ action, initialValues, mode }: Readonly<ChoreFormPro
               </label>
             ))}
           </div>
-          {state.fieldErrors?.iconKey?.[0] ? <p className="field-error">{state.fieldErrors.iconKey[0]}</p> : null}
+          {state.fieldErrors?.iconKey?.[0] ? <p className="field-error" id="icon-picker-error">{state.fieldErrors.iconKey[0]}</p> : null}
         </fieldset>
 
-        <fieldset className="picker-fieldset">
+        <fieldset className="picker-fieldset" aria-describedby={state.fieldErrors?.accentKey?.[0] ? "accent-picker-error" : undefined}>
           <legend className="field-label">Pick a color</legend>
           <div className="accent-picker">
             {CHORE_ACCENTS.map((accent) => (
@@ -125,7 +125,7 @@ export function ChoreForm({ action, initialValues, mode }: Readonly<ChoreFormPro
               </label>
             ))}
           </div>
-          {state.fieldErrors?.accentKey?.[0] ? <p className="field-error">{state.fieldErrors.accentKey[0]}</p> : null}
+          {state.fieldErrors?.accentKey?.[0] ? <p className="field-error" id="accent-picker-error">{state.fieldErrors.accentKey[0]}</p> : null}
         </fieldset>
       </Card>
 
@@ -186,7 +186,7 @@ export function ChoreForm({ action, initialValues, mode }: Readonly<ChoreFormPro
         )}
 
         {recurrenceType === "weekly" || recurrenceType === "interval_weeks" ? (
-          <fieldset className="picker-fieldset">
+          <fieldset className="picker-fieldset" aria-describedby={state.fieldErrors?.weekdays?.[0] ? "weekdays-error" : undefined}>
             <legend className="field-label">Repeat on</legend>
             <div className="weekday-picker">
               {WEEKDAYS.map((weekday) => (
@@ -197,6 +197,7 @@ export function ChoreForm({ action, initialValues, mode }: Readonly<ChoreFormPro
                     name="weekdays"
                     value={weekday.value}
                     checked={weekdays.includes(weekday.value)}
+                    aria-invalid={Boolean(state.fieldErrors?.weekdays?.[0])}
                     onChange={() => toggleWeekday(weekday.value)}
                   />
                   <span>{weekday.shortLabel}</span>
@@ -204,7 +205,7 @@ export function ChoreForm({ action, initialValues, mode }: Readonly<ChoreFormPro
                 </label>
               ))}
             </div>
-            {state.fieldErrors?.weekdays?.[0] ? <p className="field-error">{state.fieldErrors.weekdays[0]}</p> : null}
+            {state.fieldErrors?.weekdays?.[0] ? <p className="field-error" id="weekdays-error">{state.fieldErrors.weekdays[0]}</p> : null}
           </fieldset>
         ) : null}
 
@@ -244,8 +245,9 @@ export function ChoreForm({ action, initialValues, mode }: Readonly<ChoreFormPro
             maxLength={500}
             rows={4}
             aria-invalid={Boolean(state.fieldErrors?.description)}
+            aria-describedby={state.fieldErrors?.description?.[0] ? "chore-notes-error" : undefined}
           />
-          {state.fieldErrors?.description?.[0] ? <p className="field-error">{state.fieldErrors.description[0]}</p> : null}
+          {state.fieldErrors?.description?.[0] ? <p className="field-error" id="chore-notes-error">{state.fieldErrors.description[0]}</p> : null}
         </div>
       </Card>
 

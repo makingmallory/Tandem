@@ -278,15 +278,15 @@ export type Database = {
       chore_reminders: {
         Row: {
           id: string; household_id: string; chore_id: string; user_id: string;
-          enabled: boolean; reminder_type: "due_time"; local_time: string; timezone: string;
+          enabled: boolean; selected: boolean; reminder_type: "due_time"; offset_value: number; offset_unit: "day" | "week" | "month"; local_time: string; timezone: string;
           created_at: string; updated_at: string;
         };
         Insert: {
           id?: string; household_id: string; chore_id: string; user_id: string;
-          enabled?: boolean; reminder_type?: "due_time"; local_time: string; timezone: string;
+          enabled?: boolean; selected?: boolean; reminder_type?: "due_time"; offset_value?: number; offset_unit?: "day" | "week" | "month"; local_time: string; timezone: string;
           created_at?: string; updated_at?: string;
         };
-        Update: { enabled?: boolean; local_time?: string; timezone?: string; updated_at?: string };
+        Update: { enabled?: boolean; selected?: boolean; offset_value?: number; offset_unit?: "day" | "week" | "month"; local_time?: string; timezone?: string; updated_at?: string };
         Relationships: [];
       };
       push_subscriptions: {
@@ -388,6 +388,10 @@ export type Database = {
       };
       upsert_chore_reminder: {
         Args: { p_household_id: string; p_chore_id: string; p_enabled: boolean; p_reminder_type: string; p_local_time: string; p_timezone: string };
+        Returns: Database["public"]["Tables"]["chore_reminders"]["Row"][];
+      };
+      upsert_chore_reminder_v2: {
+        Args: { p_household_id: string; p_chore_id: string; p_enabled: boolean; p_reminder_type: string; p_timezone: string; p_reminders: Json };
         Returns: Database["public"]["Tables"]["chore_reminders"]["Row"][];
       };
       register_push_subscription: {

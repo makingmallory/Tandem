@@ -6,6 +6,7 @@ export const APP_BRAND = {
   notificationTitle: "A little nudge from Tandem",
   themeColor: "#176b5b",
   backgroundColor: "#f8f3e9",
+  iconPath: "/icons/app-icon.svg",
 } as const;
 
 export type AppBrand = typeof APP_BRAND;

@@ -10,8 +10,10 @@ export function FormMessage({ state }: Readonly<{ state: ActionState }>) {
 
   if (state.status === "idle" || !message) return null;
 
+  const tone = state.status === "success" ? (state.tone ?? "success") : "error";
+
   return (
-    <p className={`form-message form-message--${state.status}`} role={state.status === "error" ? "alert" : "status"}>
+    <p className={`form-message form-message--${tone}`} role={state.status === "error" ? "alert" : "status"}>
       {message}
     </p>
   );

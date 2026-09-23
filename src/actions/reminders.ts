@@ -16,7 +16,7 @@ import { reminderFormDataToInput, reminderSchema } from "@/lib/validation/remind
 
 function reminderError(code?: string) {
   if (code === "42501") return "You can only manage your own reminders and notification devices.";
-  if (code === "22023") return "Check the reminder time and timezone.";
+  if (code === "22023") return "Check notification timing, duplicates, and the chore cadence.";
   return "We could not save your reminder. Check your connection and try again.";
 }
 
@@ -33,7 +33,9 @@ export async function saveReminderAction(
   const { error } = await savePersonalReminder(household.id, choreId, parsed.data);
   if (error) return formErrorState(reminderError(error.code));
   refresh();
-  return successState(parsed.data.enabled ? "Your reminder is on." : "Your reminder is off.");
+  return parsed.data.enabled
+    ? successState(`${parsed.data.reminders.length} notification${parsed.data.reminders.length === 1 ? "" : "s"} saved.`)
+    : successState("Reminder off.", "neutral");
 }
 
 export async function registerPushSubscriptionAction(input: PushSubscriptionInput) {

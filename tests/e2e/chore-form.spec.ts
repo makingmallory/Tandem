@@ -5,7 +5,10 @@ test("add chore uses the shared detail shell and friendly recurrence builder", a
   await page.waitForLoadState("networkidle");
 
   await expect(page.getByRole("heading", { name: "Add a Chore", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Go back" })).toHaveAttribute("href", "/chores");
+  await page.evaluate(() => window.sessionStorage.clear());
+  await page.getByRole("button", { name: "Go back" }).click();
+  await expect(page).toHaveURL(/\/chores$/);
+  await page.goto("/chores/new");
   await expect(page.getByLabel("Chore name")).toBeVisible();
   await expect(page.getByLabel("Starts")).toBeVisible();
   await expect(page.getByRole("radio", { name: "Pet care" })).toBeAttached();

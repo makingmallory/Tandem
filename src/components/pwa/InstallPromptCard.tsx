@@ -15,7 +15,13 @@ export function InstallPromptCard() {
   useEffect(() => {
     const standalone = window.matchMedia("(display-mode: standalone)").matches
       || ("standalone" in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
-    if (standalone || localStorage.getItem("pwa-install-dismissed") === "1") return;
+    let dismissed = false;
+    try {
+      dismissed = localStorage.getItem("pwa-install-dismissed") === "1";
+    } catch {
+      // Storage may be unavailable in private browsing; the card can still work for this visit.
+    }
+    if (standalone || dismissed) return;
     const revealTimer = window.setTimeout(() => {
       setIsIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
       setVisible(true);
@@ -24,16 +30,23 @@ export function InstallPromptCard() {
       event.preventDefault();
       setPromptEvent(event as InstallPromptEvent);
     };
+    const installed = () => setVisible(false);
     window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", installed);
     return () => {
       window.clearTimeout(revealTimer);
       window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("appinstalled", installed);
     };
   }, []);
 
   if (!visible) return null;
   const dismiss = () => {
-    localStorage.setItem("pwa-install-dismissed", "1");
+    try {
+      localStorage.setItem("pwa-install-dismissed", "1");
+    } catch {
+      // Dismiss for this visit even when device storage is unavailable.
+    }
     setVisible(false);
   };
   const install = async () => {
@@ -57,9 +70,9 @@ export function InstallPromptCard() {
         </p>
       </div>
       <div className="button-row">
-        {promptEvent ? <button className="app-button" onClick={install}><Download size={18} /> Install</button> : null}
+        {promptEvent ? <button type="button" className="app-button" onClick={install}><Download aria-hidden="true" size={18} /> Install</button> : null}
         {isIos ? <span className="muted-copy"><Share size={16} aria-hidden="true" /> Use Safari’s Share button</span> : null}
-        <button className="app-button app-button--tertiary" onClick={dismiss}>Not now</button>
+        <button type="button" className="app-button app-button--tertiary" onClick={dismiss}>Not now</button>
       </div>
     </Card>
   );

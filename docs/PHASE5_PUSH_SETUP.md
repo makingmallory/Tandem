@@ -20,6 +20,10 @@ Generate a separate cron secret:
 
 ## 2. Apply the database migration
 
+This also applies the Phase 6 dynamic-notification migration. Existing reminders remain set to the
+due date, while the updated UI can save multiple day-, week-, or calendar-month-based notifications,
+each with its own local time.
+
 ```powershell
 cd "C:\Users\mbbam\OneDrive\Documents\Projects\Tandem"
 npx supabase login
@@ -35,6 +39,10 @@ Replace the example values without adding quote characters:
 npx supabase secrets set VAPID_PUBLIC_KEY=YOUR_PUBLIC_KEY VAPID_PRIVATE_KEY=YOUR_PRIVATE_KEY VAPID_SUBJECT=mailto:YOUR_EMAIL REMINDER_CRON_SECRET=YOUR_CRON_SECRET PUSH_APP_NAME=Tandem
 npx supabase functions deploy send-reminders --no-verify-jwt
 ```
+
+Redeploy `send-reminders` after applying the Phase 6 migration even when its secrets are already
+configured. The function now includes dynamic offset-aware notification copy and expects the expanded
+claim result.
 
 Supabase injects `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` into the function automatically. Do not put the service-role key in Vercel.
 
@@ -86,7 +94,7 @@ Select Production, Preview, and Development if desired, save, then redeploy. Do 
 ## 8. Test completion suppression
 
 1. Open an active chore due today.
-2. Enable **Remind me on the due date** and choose a time in the next five to ten minutes.
+2. Turn **Notifications** on, select **On the due date**, and choose a time in the next five to ten minutes.
 3. On the other household account, complete the same occurrence before that time.
 4. Wait through the next five-minute Cron scan.
 5. Confirm no reminder is delivered. The delivery query checks the shared occurrence status immediately before sending, so either member's completion suppresses it.

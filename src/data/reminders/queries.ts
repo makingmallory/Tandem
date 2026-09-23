@@ -2,11 +2,11 @@ import { cache } from "react";
 import { createSupabaseServerClient } from "@/data/supabase/server";
 import type { ChoreReminderRow } from "@/data/supabase/types";
 
-export const getPersonalChoreReminder = cache(async (
+export const getPersonalChoreReminders = cache(async (
   householdId: string,
   choreId: string,
   userId: string,
-): Promise<ChoreReminderRow | null> => {
+): Promise<ChoreReminderRow[]> => {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("chore_reminders")
@@ -15,9 +15,11 @@ export const getPersonalChoreReminder = cache(async (
     .eq("chore_id", choreId)
     .eq("user_id", userId)
     .eq("reminder_type", "due_time")
-    .maybeSingle();
+    .eq("selected", true)
+    .order("offset_value", { ascending: true })
+    .order("local_time", { ascending: true });
   if (error) throw new Error("We could not load your reminder.", { cause: error });
-  return data;
+  return data ?? [];
 });
 
 export const getPersonalPushSubscriptions = cache(async (userId: string) => {

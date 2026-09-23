@@ -1,20 +1,27 @@
 "use client";
 
 import { CircleAlert } from "lucide-react";
+import { useEffect } from "react";
 import { AppButton } from "@/components/ui/AppButton";
 import { Card } from "@/components/ui/Card";
 
 type ErrorStateProps = {
   title?: string;
   description?: string;
+  error?: Error;
   onRetry?: () => void;
 };
 
 export function ErrorState({
   title = "Something went sideways",
   description = "We could not load this right now. Please try again.",
+  error,
   onRetry,
 }: Readonly<ErrorStateProps>) {
+  useEffect(() => {
+    if (error && process.env.NODE_ENV === "development") console.error(error);
+  }, [error]);
+
   return (
     <Card className="state-card">
       <span className="state-card__icon">

@@ -18,7 +18,8 @@ function installedMode() {
 export function NotificationSettings({ initialDeviceCount }: Readonly<{ initialDeviceCount: number }>) {
   const [deviceState, setDeviceState] = useState<NotificationDeviceState>("unsupported");
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [deviceCount, setDeviceCount] = useState(initialDeviceCount);
+  const [message, setMessage] = useState<{ text: string; tone: "error" | "success" | "neutral" } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const refreshState = async () => {
@@ -45,7 +46,7 @@ export function NotificationSettings({ initialDeviceCount }: Readonly<{ initialD
     const timer = window.setTimeout(() => {
       void refreshState().catch(() => {
         setDeviceState("unsupported");
-        setMessage("This device could not initialize push notifications. Try reloading the app.");
+        setMessage({ text: "This device could not initialize push notifications. Try reloading the app.", tone: "error" });
       });
     }, 0);
     return () => window.clearTimeout(timer);
@@ -56,13 +57,13 @@ export function NotificationSettings({ initialDeviceCount }: Readonly<{ initialD
     try {
       const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!publicKey) {
-        setMessage("Notifications are not configured yet. Add the public VAPID key to the deployment.");
+        setMessage({ text: "Notifications are not configured yet. Add the public VAPID key to the deployment.", tone: "neutral" });
         return;
       }
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
         await refreshState();
-        setMessage("Notification permission was not granted. You can change it in your browser or phone settings.");
+        setMessage({ text: "Notification permission was not granted. You can change it in your browser or phone settings.", tone: "neutral" });
         return;
       }
       const registration = await navigator.serviceWorker.ready;
@@ -80,13 +81,14 @@ export function NotificationSettings({ initialDeviceCount }: Readonly<{ initialD
       });
       if (!result.ok) {
         await next.unsubscribe();
-        setMessage(result.message);
+        setMessage({ text: result.message, tone: "error" });
         return;
       }
-      setMessage(result.message);
+      setMessage({ text: result.message, tone: "success" });
+      setDeviceCount((count) => count + (subscription ? 0 : 1));
       await refreshState();
     } catch {
-      setMessage("This device could not enable notifications. Check your connection and try again.");
+      setMessage({ text: "This device could not enable notifications. Check your connection and try again.", tone: "error" });
     }
   });
 
@@ -95,19 +97,20 @@ export function NotificationSettings({ initialDeviceCount }: Readonly<{ initialD
     try {
       const result = await removePushSubscriptionAction(subscription.endpoint);
       if (result.ok) await subscription.unsubscribe();
-      setMessage(result.message);
+      setMessage({ text: result.message, tone: result.ok ? "neutral" : "error" });
+      if (result.ok) setDeviceCount((count) => Math.max(0, count - 1));
       await refreshState();
     } catch {
-      setMessage("This device could not turn off notifications. Check your connection and try again.");
+      setMessage({ text: "This device could not turn off notifications. Check your connection and try again.", tone: "error" });
     }
   });
 
   const test = () => startTransition(async () => {
     try {
       const result = await sendTestPushAction();
-      setMessage(result.message);
+      setMessage({ text: result.message, tone: result.ok ? "success" : "error" });
     } catch {
-      setMessage("The test notification could not be sent. Check your connection and try again.");
+      setMessage({ text: "The test notification could not be sent. Check your connection and try again.", tone: "error" });
     }
   });
 
@@ -123,28 +126,35 @@ export function NotificationSettings({ initialDeviceCount }: Readonly<{ initialD
   return (
     <div className="page-stack">
       <Card className="notification-status-card">
-        <span className="state-card__icon">{deviceState === "enabled" ? <Bell size={22} /> : <BellOff size={22} />}</span>
+        <span className="state-card__icon">{deviceState === "enabled" ? <Bell aria-hidden="true" size={22} /> : <BellOff aria-hidden="true" size={22} />}</span>
         <div>
           <p className="state-card__title">{copy}</p>
-          <p className="state-card__copy">{initialDeviceCount} {initialDeviceCount === 1 ? "device" : "devices"} registered for your account.</p>
+          <p className="state-card__copy" aria-live="polite">{deviceCount} {deviceCount === 1 ? "device" : "devices"} registered for your account.</p>
         </div>
       </Card>
       <Card className="section-stack">
         <div className="choice-card__heading">
-          <span className="choice-card__icon"><Smartphone size={22} /></span>
+          <span className="choice-card__icon"><Smartphone aria-hidden="true" size={22} /></span>
           <div><p className="eyebrow">This device</p><p className="choice-card__title">Push notifications</p></div>
         </div>
         <div className="button-row">
           {deviceState === "enabled"
-            ? <button className="app-button app-button--secondary" disabled={isPending} onClick={disable}>Turn off on this device</button>
+            ? <button type="button" className="app-button app-button--secondary" disabled={isPending} onClick={disable}>Turn off on this device</button>
             : deviceState !== "denied" && deviceState !== "needs_install" && deviceState !== "unsupported"
-              ? <button className="app-button" disabled={isPending} onClick={enable}><Bell size={18} /> Enable notifications</button>
+              ? <button type="button" className="app-button" disabled={isPending} onClick={enable}><Bell aria-hidden="true" size={18} /> Enable notifications</button>
               : null}
-          {deviceState === "enabled" ? <button className="app-button" disabled={isPending} onClick={test}><Send size={18} /> Send test notification</button> : null}
+          {deviceState === "enabled" ? <button type="button" className="app-button" disabled={isPending} onClick={test}><Send aria-hidden="true" size={18} /> Send test notification</button> : null}
         </div>
         {deviceState === "denied" ? <p className="muted-copy">Open this site’s browser settings, allow Notifications, then return here.</p> : null}
         {deviceState === "needs_install" ? <p className="muted-copy">In Safari, tap Share, choose Add to Home Screen, then open the installed app.</p> : null}
-        {message ? <p className="form-message" role="status">{message}</p> : null}
+        {message ? (
+          <p
+            className={`form-message form-message--${message.tone}`}
+            role={message.tone === "error" ? "alert" : "status"}
+          >
+            {message.text}
+          </p>
+        ) : null}
       </Card>
     </div>
   );
