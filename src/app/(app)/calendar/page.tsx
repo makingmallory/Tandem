@@ -39,9 +39,9 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
       <div className="page-stack">
         <WeekSelector days={days} selectedDate={selectedDate} occurrences={occurrences} />
         <section className="section-stack" aria-labelledby="selected-date-heading">
-          <div>
-            <p className="eyebrow">Selected day</p>
+          <div className="section-heading-row">
             <h2 className="section-heading" id="selected-date-heading">{formatLongDate(selectedDate)}</h2>
+            <span className="muted-copy">{selectedOccurrences.length} {selectedOccurrences.length === 1 ? "chore" : "chores"}</span>
           </div>
           {selectedOccurrences.length ? (
             <ul className="occurrence-list">

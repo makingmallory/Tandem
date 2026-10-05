@@ -3,7 +3,6 @@ import { OccurrenceCard } from "@/components/occurrence/OccurrenceCard";
 import { PageShell } from "@/components/layout/PageShell";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { APP_BRAND } from "@/config/brand";
 import { HOUSEHOLD_TIME_ZONE } from "@/config/time";
 import { getCurrentHousehold } from "@/data/household/queries";
 import { getOverdueOccurrences, getTodayOccurrences, getUpcomingOccurrences } from "@/data/occurrences/queries";
@@ -34,30 +33,27 @@ export default async function HomePage() {
 
   return (
     <PageShell
-      title={APP_BRAND.name}
-      subtitle={APP_BRAND.tagline}
+      title="Today at Home"
+      subtitle={formatLongDate(today)}
       variant="root"
     >
       <div className="page-stack">
         <InstallPromptCard />
-        <div>
-          <p className="eyebrow">Today at home</p>
-          <p className="today-date">{formatLongDate(today)}</p>
-        </div>
 
         <Card className="progress-card">
           <div className="progress-card__topline">
-            <div>
-              <p className="eyebrow">On the list</p>
-              <p className="progress-card__value">
-                {progress.completed} of {progress.total} done
-              </p>
-            </div>
+            <p className="progress-card__title">Today</p>
+            <p className="progress-card__value">
+              {progress.completed} of {progress.total} done
+            </p>
           </div>
           <div className="progress-track" aria-label={`${progress.completed} of ${progress.total} chores done`}>
             <span style={{ width: progress.total ? `${(progress.completed / progress.total) * 100}%` : "0%" }} />
           </div>
-          <p className="muted-copy">{occurrences.overdue.length} overdue · {occurrences.upcoming.length} coming up</p>
+          <p className="muted-copy">
+            {occurrences.overdue.length ? `${occurrences.overdue.length} need attention · ` : ""}
+            {occurrences.upcoming.length} coming up
+          </p>
         </Card>
 
         {occurrences.overdue.length ? (
@@ -65,7 +61,7 @@ export default async function HomePage() {
             <h2 className="section-heading" id="overdue-heading">Needs a little catch-up</h2>
             <ul className="occurrence-list">
               {occurrences.overdue.map((occurrence) => (
-                <OccurrenceCard occurrence={occurrence} today={today} showDate key={occurrence.id} />
+                <OccurrenceCard occurrence={occurrence} today={today} showDate presentation="home" key={occurrence.id} />
               ))}
             </ul>
           </section>
@@ -76,7 +72,7 @@ export default async function HomePage() {
           {occurrences.today.length ? (
             <ul className="occurrence-list">
               {occurrences.today.map((occurrence) => (
-                <OccurrenceCard occurrence={occurrence} today={today} key={occurrence.id} />
+                <OccurrenceCard occurrence={occurrence} today={today} presentation="home" key={occurrence.id} />
               ))}
             </ul>
           ) : (
@@ -89,7 +85,7 @@ export default async function HomePage() {
             <h2 className="section-heading" id="upcoming-heading">Coming up</h2>
             <ul className="occurrence-list">
               {occurrences.upcoming.map((occurrence) => (
-                <OccurrenceCard occurrence={occurrence} today={today} showDate key={occurrence.id} />
+                <OccurrenceCard occurrence={occurrence} today={today} showDate presentation="home" key={occurrence.id} />
               ))}
             </ul>
           </section>

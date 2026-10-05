@@ -5,6 +5,7 @@ import { ChoreCard } from "@/components/chore/ChoreCard";
 import { PageShell } from "@/components/layout/PageShell";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getChores } from "@/data/chores/queries";
+import { choreFixtures } from "@/data/chores/test-fixtures";
 import { getCurrentHousehold } from "@/data/household/queries";
 import { isShellTestMode } from "@/lib/test-mode";
 
@@ -15,17 +16,14 @@ const addAction = (
 );
 
 export default async function ChoresPage() {
+  let chores;
   if (isShellTestMode()) {
-    return (
-      <PageShell title="Chores" variant="root" actions={addAction}>
-        <div className="page-stack" />
-      </PageShell>
-    );
+    chores = choreFixtures();
+  } else {
+    const household = await getCurrentHousehold();
+    if (!household) redirect("/setup");
+    chores = await getChores(household.id);
   }
-
-  const household = await getCurrentHousehold();
-  if (!household) redirect("/setup");
-  const chores = await getChores(household.id);
   const activeChores = chores.filter((chore) => chore.is_active);
   const pausedChores = chores.filter((chore) => !chore.is_active);
 
@@ -41,8 +39,8 @@ export default async function ChoresPage() {
         <div className="page-stack">
           <section className="section-stack" aria-labelledby="active-chores-heading">
             <div>
-              <p className="eyebrow">Shared routines</p>
               <h2 className="section-heading" id="active-chores-heading">Active chores</h2>
+              <p className="section-supporting-copy">The rhythms keeping your home moving.</p>
             </div>
             {activeChores.length ? (
               <ul className="chore-list">
@@ -56,8 +54,8 @@ export default async function ChoresPage() {
           {pausedChores.length ? (
             <section className="section-stack" aria-labelledby="paused-chores-heading">
               <div>
-                <p className="eyebrow">Still manageable</p>
                 <h2 className="section-heading" id="paused-chores-heading">Paused</h2>
+                <p className="section-supporting-copy">Saved routines that are resting for now.</p>
               </div>
               <ul className="chore-list">
                 {pausedChores.map((chore) => <ChoreCard chore={chore} key={chore.id} />)}

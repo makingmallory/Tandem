@@ -10,8 +10,8 @@ test("Today shows scheduled, overdue, and upcoming occurrence data", async ({ pa
   await expect(page.getByText("Skipped", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: /Mark .* as complete/ }).first()).toBeVisible();
   const completedChore = page.locator(".occurrence-card").filter({ hasText: "Done by Nik" });
-  await expect(completedChore.getByRole("button", { name: "Mark Water plants as incomplete" })).toHaveText("Completed");
-  await expect(completedChore.getByTestId("occurrence-action-cluster").getByLabel("More actions for Water plants")).toBeVisible();
+  await expect(completedChore.getByRole("button", { name: "Mark Water plants as incomplete" })).toBeVisible();
+  await expect(completedChore.getByTestId("occurrence-action-cluster").getByLabel("More actions for Water plants")).toHaveCount(0);
 });
 
 test("History shows real household activity rather than a placeholder", async ({ page }) => {

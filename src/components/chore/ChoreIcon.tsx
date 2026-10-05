@@ -22,7 +22,7 @@ export function ChoreIcon({ iconKey, accentKey, size = "default" }: Readonly<Cho
       role="img"
       aria-label={label}
     >
-      <Icon aria-hidden="true" size={size === "large" ? 32 : 24} strokeWidth={2.1} />
+      <Icon aria-hidden="true" size={size === "large" ? 33 : 26} strokeWidth={2.15} />
     </span>
   );
 }

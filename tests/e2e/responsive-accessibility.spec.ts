@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const WIDTHS = [320, 375, 390, 430];
-const ROUTES = ["/", "/calendar?date=2026-09-18", "/chores/new", "/history", "/household", "/settings/notifications"];
+const ROUTES = ["/", "/calendar?date=2026-09-18", "/chores", "/chores/new", "/history", "/household", "/settings/notifications"];
 
 test("primary routes stay inside realistic phone viewports", async ({ page }) => {
   for (const width of WIDTHS) {
@@ -70,4 +70,23 @@ test("settings stay discoverable and detail back navigation follows in-app histo
   await expect(page).toHaveURL(/\/settings\/notifications$/);
   await page.getByRole("button", { name: "Go back" }).click();
   await expect(page).toHaveURL(/\/household$/);
+});
+
+test("desktop presentation stays centered and preserves the mobile app frame", async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+
+  const frame = await page.locator(".app-frame").evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    return {
+      width: box.width,
+      leftGap: box.left,
+      rightGap: window.innerWidth - box.right,
+      radius: getComputedStyle(element).borderRadius,
+    };
+  });
+  expect(frame.width).toBeLessThanOrEqual(544);
+  expect(Math.abs(frame.leftGap - frame.rightGap)).toBeLessThanOrEqual(1);
+  expect(frame.radius).not.toBe("0px");
 });

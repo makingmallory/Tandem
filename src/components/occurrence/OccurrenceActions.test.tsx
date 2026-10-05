@@ -74,4 +74,14 @@ describe("OccurrenceActions", () => {
     expect(screen.queryByRole("button", { name: /Mark incomplete/ })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Edit chore/ })).toBeVisible();
   });
+
+  it("renders the Home presentation as an accessible completion circle without the secondary menu", () => {
+    render(<OccurrenceActions compact occurrenceId="occurrence-1" choreId="chore-1" choreName="Clean bathroom" status="scheduled" scheduledDate="2026-09-18" />);
+
+    const button = screen.getByRole("button", { name: "Mark Clean bathroom as complete" });
+    expect(button).toHaveClass("occurrence-actions__completion--compact");
+    expect(button).toHaveAttribute("aria-pressed", "false");
+    expect(button).toHaveTextContent("Incomplete");
+    expect(screen.queryByLabelText("More actions for Clean bathroom")).not.toBeInTheDocument();
+  });
 });

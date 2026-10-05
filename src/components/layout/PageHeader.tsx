@@ -50,7 +50,10 @@ export function PageHeader({
 
       <div className="page-header__title-group">
         {!isDetail && authenticated ? (
-          <Image className="page-header__logo" src={APP_BRAND.iconPath} alt="" width={30} height={30} priority />
+          <div className="page-header__brand" aria-label={APP_BRAND.name}>
+            <Image className="page-header__logo" src={APP_BRAND.iconPath} alt="" width={36} height={36} priority />
+            <span className="page-header__brand-name">{APP_BRAND.name}</span>
+          </div>
         ) : null}
         <div className="page-header__title-copy">
           <h1 className="page-header__title" data-testid="page-header-title">

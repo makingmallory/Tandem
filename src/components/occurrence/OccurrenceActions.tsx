@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, Ellipsis, Pencil, SkipForward } from "lucide-react";
+import { CalendarClock, Check, Ellipsis, LoaderCircle, Pencil, SkipForward } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useEffect, useId } from "react";
 import { useFormStatus } from "react-dom";
@@ -22,6 +22,7 @@ type OccurrenceActionsProps = {
   choreName: string;
   status: "scheduled" | "completed" | "skipped";
   scheduledDate: DateOnly;
+  compact?: boolean;
 };
 
 function RealtimeMutationGuard() {
@@ -37,7 +38,14 @@ function RealtimeMutationGuard() {
   return null;
 }
 
-export function OccurrenceActions({ occurrenceId, choreId, choreName, status, scheduledDate }: Readonly<OccurrenceActionsProps>) {
+export function OccurrenceActions({
+  occurrenceId,
+  choreId,
+  choreName,
+  status,
+  scheduledDate,
+  compact = false,
+}: Readonly<OccurrenceActionsProps>) {
   const [completionState, completionAction] = useActionState(
     (status === "completed" ? undoOccurrenceAction : completeOccurrenceAction).bind(null, occurrenceId),
     INITIAL_ACTION_STATE,
@@ -49,21 +57,27 @@ export function OccurrenceActions({ occurrenceId, choreId, choreName, status, sc
   );
 
   return (
-    <div className="occurrence-actions" data-testid="occurrence-action-cluster">
+    <div className={`occurrence-actions${compact ? " occurrence-actions--compact" : ""}`} data-testid="occurrence-action-cluster">
       {status === "scheduled" || status === "completed" ? (
         <form action={completionAction} className="occurrence-actions__primary">
           <RealtimeMutationGuard />
           <SubmitButton
             aria-label={status === "completed" ? `Mark ${choreName} as incomplete` : `Mark ${choreName} as complete`}
-            className="occurrence-actions__completion"
-            pendingLabel="Saving…"
+            aria-pressed={status === "completed"}
+            className={`occurrence-actions__completion${compact ? " occurrence-actions__completion--compact" : ""}`}
+            pendingLabel={compact ? <><LoaderCircle aria-hidden="true" size={18} /><span className="visually-hidden">Saving</span></> : "Saving…"}
             variant={status === "completed" ? "secondary" : "primary"}
           >
-            {status === "completed" ? "Completed" : "Mark as Done"}
+            {compact ? (
+              <>
+                {status === "completed" ? <Check aria-hidden="true" size={20} strokeWidth={3} /> : null}
+                <span className="visually-hidden">{status === "completed" ? "Completed" : "Incomplete"}</span>
+              </>
+            ) : status === "completed" ? "Completed" : "Mark as Done"}
           </SubmitButton>
         </form>
       ) : null}
-      <details className="occurrence-actions__more">
+      {!compact ? <details className="occurrence-actions__more">
         <summary className="icon-button" aria-label={`More actions for ${choreName}`}>
           <Ellipsis aria-hidden="true" size={21} />
         </summary>
@@ -96,7 +110,7 @@ export function OccurrenceActions({ occurrenceId, choreId, choreName, status, sc
             <Pencil aria-hidden="true" size={17} /> Edit chore
           </Link>
         </div>
-      </details>
+      </details> : null}
       {completionState.status !== "idle" && completionState.formError ? (
         <p className="occurrence-action-feedback occurrence-action-feedback--error" role="alert">
           {completionState.formError}

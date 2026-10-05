@@ -1,4 +1,4 @@
-import { Bell, ChevronRight, KeyRound } from "lucide-react";
+import { Bell, ChevronRight, House, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SignOutButton } from "@/components/auth/SignOutButton";
@@ -25,12 +25,12 @@ export default async function HouseholdPage() {
           <Card>
             <nav className="settings-list" aria-label="Personal settings">
               <Link className="settings-list__item" href="/settings/notifications">
-                <Bell aria-hidden="true" size={20} />
+                <span className="settings-list__icon"><Bell aria-hidden="true" size={20} /></span>
                 <span><strong>Notifications</strong><small>Devices and test notifications</small></span>
                 <ChevronRight aria-hidden="true" size={19} />
               </Link>
               <Link className="settings-list__item" href="/settings/account">
-                <KeyRound aria-hidden="true" size={20} />
+                <span className="settings-list__icon"><KeyRound aria-hidden="true" size={20} /></span>
                 <span><strong>Account</strong><small>Profile and sign-in</small></span>
                 <ChevronRight aria-hidden="true" size={19} />
               </Link>
@@ -49,10 +49,17 @@ export default async function HouseholdPage() {
       <div className="page-stack">
         <section className="section-stack">
           <div>
-            <p className="eyebrow">Household</p>
-            <h2 className="section-heading">{household.name}</h2>
+            <h2 className="section-heading">Household</h2>
+            <p className="section-supporting-copy">Your shared home and the people in it.</p>
           </div>
-          <Card>
+          <Card className="settings-household-card">
+            <div className="settings-household-card__heading">
+              <span className="settings-list__icon"><House aria-hidden="true" size={21} /></span>
+              <div>
+                <p className="settings-household-card__name">{household.name}</p>
+                <p className="muted-copy">{household.members.length} {household.members.length === 1 ? "member" : "members"}</p>
+              </div>
+            </div>
             {household.members.length ? (
               <div className="section-stack">
                 <MemberList members={household.members} />
@@ -70,18 +77,18 @@ export default async function HouseholdPage() {
 
         <section className="section-stack" aria-labelledby="personal-settings-heading">
           <div>
-            <p className="eyebrow">Personal</p>
             <h2 className="section-heading" id="personal-settings-heading">Your settings</h2>
+            <p className="section-supporting-copy">Notifications and account preferences.</p>
           </div>
-          <Card>
+          <Card className="settings-hub-card">
             <nav className="settings-list" aria-label="Personal settings">
               <Link className="settings-list__item" href="/settings/notifications">
-                <Bell aria-hidden="true" size={20} />
+                <span className="settings-list__icon"><Bell aria-hidden="true" size={20} /></span>
                 <span><strong>Notifications</strong><small>Devices and test notifications</small></span>
                 <ChevronRight aria-hidden="true" size={19} />
               </Link>
               <Link className="settings-list__item" href="/settings/account">
-                <KeyRound aria-hidden="true" size={20} />
+                <span className="settings-list__icon"><KeyRound aria-hidden="true" size={20} /></span>
                 <span><strong>Account</strong><small>{user.email}</small></span>
                 <ChevronRight aria-hidden="true" size={19} />
               </Link>

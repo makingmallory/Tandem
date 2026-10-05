@@ -6,7 +6,7 @@ import { AppButton } from "@/components/ui/AppButton";
 
 type SubmitButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> & {
   children: React.ReactNode;
-  pendingLabel?: string;
+  pendingLabel?: React.ReactNode;
   variant?: "primary" | "secondary" | "tertiary";
 };
 

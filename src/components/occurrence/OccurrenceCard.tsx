@@ -9,13 +9,19 @@ type OccurrenceCardProps = {
   occurrence: OccurrenceWithChore;
   today: DateOnly;
   showDate?: boolean;
+  presentation?: "default" | "home";
 };
 
-export function OccurrenceCard({ occurrence, today, showDate = false }: Readonly<OccurrenceCardProps>) {
+export function OccurrenceCard({
+  occurrence,
+  today,
+  showDate = false,
+  presentation = "default",
+}: Readonly<OccurrenceCardProps>) {
   const isOverdue = occurrence.status === "scheduled" && occurrence.scheduled_date < today;
   const completion = occurrence.completion;
   return (
-    <li className="occurrence-card" data-status={occurrence.status}>
+    <li className="occurrence-card" data-status={occurrence.status} data-presentation={presentation}>
       <ChoreIcon iconKey={occurrence.chore.icon_key} accentKey={occurrence.chore.accent_key} />
       <div className="occurrence-card__body">
         <span className="occurrence-card__name">{occurrence.chore.name}</span>
@@ -40,6 +46,7 @@ export function OccurrenceCard({ occurrence, today, showDate = false }: Readonly
         choreName={occurrence.chore.name}
         status={occurrence.status}
         scheduledDate={occurrence.scheduled_date as DateOnly}
+        compact={presentation === "home"}
       />
     </li>
   );
