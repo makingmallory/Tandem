@@ -174,6 +174,41 @@ describe("Phase 4 completion, history, and RLS", () => {
     });
   });
 
+  it("moves an overdue occurrence into tomorrow's date queries without shifting its recurrence anchor", async () => {
+    await authenticateAs(OWNER_ID);
+    const chore = await database.query<{ id: string; anchor_date: string }>(`
+      select id, anchor_date::text from public.create_chore_with_occurrences(
+        '${householdId}', 'Reschedule regression', null, 'checklist', 'teal', 'weekly', 1,
+        '2026-09-19', array[6]::smallint[], null, array['2026-10-01']::date[]
+      )
+    `);
+    const occurrence = await database.query<{ id: string }>(`
+      select id from public.chore_occurrences where chore_id = '${chore.rows[0]!.id}'
+    `);
+
+    await database.query(`
+      select * from public.reschedule_occurrence(
+        '${occurrence.rows[0]!.id}', '${householdId}', '2026-10-06'
+      )
+    `);
+
+    const overdue = await database.query<{ id: string }>(`
+      select id from public.chore_occurrences
+      where chore_id = '${chore.rows[0]!.id}' and status = 'scheduled' and scheduled_date < '2026-10-05'
+    `);
+    const calendar = await database.query<{ id: string; scheduled_date: string }>(`
+      select id, scheduled_date::text from public.chore_occurrences
+      where chore_id = '${chore.rows[0]!.id}' and scheduled_date = '2026-10-06'
+    `);
+    const anchor = await database.query<{ anchor_date: string }>(`
+      select anchor_date::text from public.chores where id = '${chore.rows[0]!.id}'
+    `);
+
+    expect(overdue.rows).toEqual([]);
+    expect(calendar.rows).toEqual([{ id: occurrence.rows[0]!.id, scheduled_date: "2026-10-06" }]);
+    expect(anchor.rows[0]).toEqual({ anchor_date: chore.rows[0]!.anchor_date });
+  });
+
   it("prevents spoofed writes and isolates other households", async () => {
     await authenticateAs(MEMBER_ID);
     await expect(database.query(`

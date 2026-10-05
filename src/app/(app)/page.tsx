@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { OccurrenceCard } from "@/components/occurrence/OccurrenceCard";
+import { HomeOverdueSection } from "@/components/occurrence/HomeOverdueSection";
 import { PageShell } from "@/components/layout/PageShell";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -12,6 +13,7 @@ import { formatLongDate } from "@/domain/formatters/dates";
 import { occurrenceHorizonEnd } from "@/domain/recurrence/generateOccurrences";
 import { isShellTestMode } from "@/lib/test-mode";
 import { occurrenceProgress, sortOccurrencesForToday } from "@/domain/occurrences/progress";
+import { homeOverduePresentation } from "@/domain/occurrences/home-overdue";
 import { InstallPromptCard } from "@/components/pwa/InstallPromptCard";
 
 export default async function HomePage() {
@@ -30,6 +32,7 @@ export default async function HomePage() {
     occurrences = { today: sortOccurrencesForToday(todayItems), overdue, upcoming };
   }
   const progress = occurrenceProgress(occurrences.today);
+  const overdue = homeOverduePresentation(occurrences.overdue, today);
 
   return (
     <PageShell
@@ -51,21 +54,12 @@ export default async function HomePage() {
             <span style={{ width: progress.total ? `${(progress.completed / progress.total) * 100}%` : "0%" }} />
           </div>
           <p className="muted-copy">
-            {occurrences.overdue.length ? `${occurrences.overdue.length} need attention · ` : ""}
+            {overdue.total ? `${overdue.total} need attention · ` : ""}
             {occurrences.upcoming.length} coming up
           </p>
         </Card>
 
-        {occurrences.overdue.length ? (
-          <section className="section-stack" aria-labelledby="overdue-heading">
-            <h2 className="section-heading" id="overdue-heading">Needs a little catch-up</h2>
-            <ul className="occurrence-list">
-              {occurrences.overdue.map((occurrence) => (
-                <OccurrenceCard occurrence={occurrence} today={today} showDate presentation="home" key={occurrence.id} />
-              ))}
-            </ul>
-          </section>
-        ) : null}
+        <HomeOverdueSection occurrences={occurrences.overdue} today={today} />
 
         <section className="section-stack" aria-labelledby="today-heading">
           <h2 className="section-heading" id="today-heading">Today&apos;s chores</h2>

@@ -2,6 +2,7 @@
 
 import { CalendarClock, Check, Ellipsis, LoaderCircle, Pencil, SkipForward } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useId } from "react";
 import { useFormStatus } from "react-dom";
 import {
@@ -15,6 +16,7 @@ import { SubmitButton } from "@/components/forms/SubmitButton";
 import { FormMessage } from "@/components/ui/FormMessage";
 import { useLocalHouseholdMutation } from "@/components/providers/RealtimeHouseholdProvider";
 import type { DateOnly } from "@/domain/dates/date-only";
+import { addDays } from "@/domain/dates/date-only";
 
 type OccurrenceActionsProps = {
   occurrenceId: string;
@@ -22,6 +24,7 @@ type OccurrenceActionsProps = {
   choreName: string;
   status: "scheduled" | "completed" | "skipped";
   scheduledDate: DateOnly;
+  today?: DateOnly;
   compact?: boolean;
 };
 
@@ -44,8 +47,10 @@ export function OccurrenceActions({
   choreName,
   status,
   scheduledDate,
+  today,
   compact = false,
 }: Readonly<OccurrenceActionsProps>) {
+  const router = useRouter();
   const [completionState, completionAction] = useActionState(
     (status === "completed" ? undoOccurrenceAction : completeOccurrenceAction).bind(null, occurrenceId),
     INITIAL_ACTION_STATE,
@@ -55,6 +60,14 @@ export function OccurrenceActions({
     rescheduleOccurrenceAction.bind(null, occurrenceId),
     INITIAL_ACTION_STATE,
   );
+  const rescheduleFeedbackState = rescheduleState.status === "success"
+    && rescheduleState.rescheduledDate !== scheduledDate
+    ? INITIAL_ACTION_STATE
+    : rescheduleState;
+
+  useEffect(() => {
+    if (rescheduleState.status === "success") router.refresh();
+  }, [rescheduleState.status, router]);
 
   return (
     <div className={`occurrence-actions${compact ? " occurrence-actions--compact" : ""}`} data-testid="occurrence-action-cluster">
@@ -77,6 +90,34 @@ export function OccurrenceActions({
           </SubmitButton>
         </form>
       ) : null}
+      {compact && status === "scheduled" && today ? <details className="occurrence-actions__more occurrence-actions__more--compact">
+        <summary className="icon-button" aria-label={`More actions for ${choreName}`}>
+          <Ellipsis aria-hidden="true" size={21} />
+        </summary>
+        <div className="occurrence-actions__panel">
+          <form action={rescheduleAction}>
+            <RealtimeMutationGuard />
+            <input name="scheduledDate" type="hidden" value={addDays(today, 1)} />
+            <SubmitButton variant="tertiary" pendingLabel="Moving…">
+              <CalendarClock aria-hidden="true" size={17} /> Tomorrow
+            </SubmitButton>
+          </form>
+          <form action={rescheduleAction} className="occurrence-reschedule-form">
+            <RealtimeMutationGuard />
+            <label htmlFor={`reschedule-${occurrenceId}`}><CalendarClock aria-hidden="true" size={17} /> Choose another date</label>
+            <input id={`reschedule-${occurrenceId}`} name="scheduledDate" type="date" defaultValue={scheduledDate} required />
+            <SubmitButton variant="secondary" pendingLabel="Moving…">Reschedule</SubmitButton>
+            <FormMessage state={rescheduleFeedbackState} />
+          </form>
+          <form action={skipAction}>
+            <RealtimeMutationGuard />
+            <SubmitButton variant="tertiary" pendingLabel="Skipping…">
+              <SkipForward aria-hidden="true" size={17} /> Skip this time
+            </SubmitButton>
+            <FormMessage state={skipState} />
+          </form>
+        </div>
+      </details> : null}
       {!compact ? <details className="occurrence-actions__more">
         <summary className="icon-button" aria-label={`More actions for ${choreName}`}>
           <Ellipsis aria-hidden="true" size={21} />
@@ -102,7 +143,7 @@ export function OccurrenceActions({
                 required
               />
               <SubmitButton variant="secondary" pendingLabel="Moving…">Reschedule</SubmitButton>
-              <FormMessage state={rescheduleState} />
+              <FormMessage state={rescheduleFeedbackState} />
             </form>
             </>
           ) : null}

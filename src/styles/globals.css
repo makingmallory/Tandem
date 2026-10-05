@@ -1291,8 +1291,8 @@ select {
 }
 
 .occurrence-actions--compact {
-  grid-template-columns: var(--touch-target);
-  gap: 0;
+  grid-template-columns: repeat(2, var(--touch-target));
+  gap: var(--space-2);
 }
 
 .occurrence-actions__primary .app-button {
@@ -1346,6 +1346,15 @@ select {
 
 .occurrence-actions__more {
   position: relative;
+}
+
+.occurrence-actions__more--compact .icon-button {
+  width: var(--touch-target);
+  height: var(--touch-target);
+}
+
+.home-overdue-toggle {
+  justify-self: start;
 }
 
 .occurrence-actions__more summary {

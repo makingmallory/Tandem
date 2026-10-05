@@ -28,6 +28,7 @@ Tandem is a mobile-first shared-household chore PWA. The repository contains the
 - Completion and activity records, plus Supabase Realtime invalidation for shared household data.
 - Per-user, per-chore reminder preferences, browser push-subscription management, a notification test route, delivery claims, and dynamic reminder text/lead handling.
 - An installable portrait PWA with a pre-cached offline page only. Authenticated pages and data are intentionally network-only when offline.
+- IMPLEMENTED: Home rescheduling revalidates Home and Calendar, refreshes the initiating client, and withholds success feedback until refreshed occurrence props match the confirmed persisted date. This is not VERIFIED; production browser validation remains pending.
 
 ## Product Invariants
 
@@ -95,7 +96,7 @@ npm run db:lint
 ## Known Limitations / Pending Production Work
 
 - Deployment state cannot be established from this checkout. The Vercel, Supabase, Edge Function, cron, and real-device PWA/push steps in `docs/` must be checked in their respective environments.
-- `docs/PHASE5_PUSH_SETUP.md` describes placeholder-based cron setup, while the tracked `supabase/cron/setup_reminder_cron.sql` currently contains deployment-specific configuration. Review it for credential hygiene and rotate/replace sensitive material through Supabase before sharing or reusing it; do not copy values into this document.
+- The tracked `supabase/cron/setup_reminder_cron.sql` has been sanitized to use placeholders. Production deployment remains pending, and rotating the previously committed cron secret is still a manual production-readiness step before setup; see `docs/PHASE5_PUSH_SETUP.md`.
 - The repository documents a Supabase Free-plan inactivity caveat and recommends real-device testing for install, notifications, and realtime behavior.
 
 ## Current / Next Work

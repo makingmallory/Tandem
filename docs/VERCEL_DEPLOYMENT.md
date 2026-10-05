@@ -24,8 +24,9 @@ HOUSEHOLD_TIME_ZONE=America/Chicago
 
 For an older Supabase project, use `NEXT_PUBLIC_SUPABASE_ANON_KEY` instead of the publishable key.
 Do not add `SUPABASE_SERVICE_ROLE_KEY`, `VAPID_PRIVATE_KEY`, `REMINDER_CRON_SECRET`, or a database
-password to Vercel. Those secrets belong only in Supabase/its Edge Function environment. Redeploy
-after changing a `NEXT_PUBLIC_*` value because it is embedded at build time.
+password to Vercel. Those secrets belong only in Supabase/its Edge Function environment. The VAPID
+private key, cron secret, service-role key, and database password must never use `NEXT_PUBLIC_*`
+variables. Redeploy after changing a `NEXT_PUBLIC_*` value because it is embedded at build time.
 
 ## 3. Configure Supabase Auth for the final URL
 
@@ -41,7 +42,8 @@ In **Authentication → URL Configuration**:
 ## 4. Confirm the already-configured reminder backend
 
 Follow [`PHASE5_PUSH_SETUP.md`](./PHASE5_PUSH_SETUP.md) if the Edge Function or Cron job must be set
-up again. The `send-reminders` function needs `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
+up again. The previously committed cron secret must be rotated before production; use the new value
+in both Supabase Function secrets and the placeholder-based SQL setup. The `send-reminders` function needs `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
 `VAPID_SUBJECT`, `REMINDER_CRON_SECRET`, and `PUSH_APP_NAME` in Supabase. The
 `tandem-reminder-scan` Supabase Cron job should remain on its five-minute schedule.
 

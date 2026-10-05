@@ -46,6 +46,7 @@ export function OccurrenceCard({
         choreName={occurrence.chore.name}
         status={occurrence.status}
         scheduledDate={occurrence.scheduled_date as DateOnly}
+        today={today}
         compact={presentation === "home"}
       />
     </li>

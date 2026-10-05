@@ -50,8 +50,10 @@ export const getOverdueOccurrences = cache(
       .eq("household_id", householdId)
       .eq("chore.is_active", true)
       .eq("status", "scheduled")
-      .lt("scheduled_date", date)
-      .order("scheduled_date", { ascending: true });
+      // Include a recently deferred occurrence so Home can use its original
+      // due date to suppress older backlog rows for the same chore.
+      .lt("original_scheduled_date", date)
+      .order("original_scheduled_date", { ascending: true });
     if (error) occurrenceError(error);
     return normalizeOccurrences((data ?? []) as unknown as RawOccurrenceWithChore[]);
   },

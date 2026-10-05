@@ -48,10 +48,14 @@ Supabase injects `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE
 
 ## 4. Configure Supabase Cron
 
+The cron secret was previously committed in repository history. Generate a new secret before
+production and use it both here and as `REMINDER_CRON_SECRET` for the Edge Function. Do not reuse
+the historical value.
+
 Open `supabase/cron/setup_reminder_cron.sql`. Replace:
 
-- `YOUR_PROJECT_REF` with the reference shown in Supabase Dashboard → Project Settings → General.
-- `REPLACE_WITH_A_LONG_RANDOM_SECRET` with the exact `REMINDER_CRON_SECRET` used above.
+- `YOUR_PROJECT_REF` with the project reference shown in Supabase Dashboard → Project Settings → General.
+- `REPLACE_WITH_A_LONG_RANDOM_SECRET` with the newly generated `REMINDER_CRON_SECRET` used above.
 
 In Supabase Dashboard, open **SQL Editor**, choose **New query**, paste the edited file, and click **Run**. Then open **Integrations → Cron** and confirm `tandem-reminder-scan` is scheduled for every five minutes.
 
@@ -63,7 +67,9 @@ Open Vercel → the Tandem project → **Settings → Environment Variables**. A
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=YOUR_PUBLIC_KEY
 ```
 
-Select Production, Preview, and Development if desired, save, then redeploy. Do not add `VAPID_PRIVATE_KEY` or `SUPABASE_SERVICE_ROLE_KEY` to a `NEXT_PUBLIC_` variable.
+Select Production, Preview, and Development if desired, save, then redeploy. Only the VAPID public key
+belongs in a `NEXT_PUBLIC_*` variable. Never put the VAPID private key, cron secret, service-role key,
+or database password in any `NEXT_PUBLIC_*` variable.
 
 ## 6. Install and enable notifications
 

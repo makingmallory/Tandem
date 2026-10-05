@@ -3,8 +3,8 @@ create extension if not exists pg_cron with schema pg_catalog;
 create extension if not exists pg_net with schema extensions;
 create extension if not exists supabase_vault with schema vault;
 
-select vault.create_secret('https://ggtnhfduoshxtvewxuqd.supabase.co', 'tandem_project_url');
-select vault.create_secret('gUkIJDWv2TCTCO/35Y5tGuv2EQU+pTmCExK1enqe9vg=', 'tandem_reminder_cron_secret');
+select vault.create_secret('https://YOUR_PROJECT_REF.supabase.co', 'tandem_project_url');
+select vault.create_secret('REPLACE_WITH_A_LONG_RANDOM_SECRET', 'tandem_reminder_cron_secret');
 
 select cron.schedule(
   'tandem-reminder-scan',

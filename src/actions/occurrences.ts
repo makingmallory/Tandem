@@ -1,6 +1,6 @@
 "use server";
 
-import { refresh } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 import type { ActionState } from "@/actions/state";
 import { formErrorState, successState } from "@/actions/state";
 import {
@@ -23,6 +23,8 @@ function mutationErrorMessage(code?: string) {
 function refreshOccurrenceViews() {
   // A Server Action response already carries a refreshed RSC payload for the
   // initiating view. Realtime updates every other open household client.
+  revalidatePath("/");
+  revalidatePath("/calendar");
   refresh();
 }
 
@@ -84,8 +86,11 @@ export async function rescheduleOccurrenceAction(
   if (!isDateOnly(scheduledDate)) return formErrorState("Choose a valid new date.");
   const household = await householdId();
   if (!household) return formErrorState("Please sign in and join a household first.");
-  const { error } = await rescheduleOccurrence(household, occurrenceId, scheduledDate);
+  const { data, error } = await rescheduleOccurrence(household, occurrenceId, scheduledDate);
   if (error) return formErrorState(mutationErrorMessage(error.code));
+  if (!data || data.id !== occurrenceId || data.scheduled_date !== scheduledDate) {
+    return formErrorState("We could not confirm the new date. Please try again.");
+  }
   refreshOccurrenceViews();
-  return successState("Occurrence rescheduled.");
+  return { ...successState("Occurrence rescheduled."), rescheduledDate: scheduledDate };
 }

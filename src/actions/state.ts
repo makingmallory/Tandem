@@ -4,6 +4,7 @@ export type ActionState = {
   fieldErrors?: Record<string, string[]>;
   formError?: string;
   successMessage?: string;
+  rescheduledDate?: string;
 };
 
 export const INITIAL_ACTION_STATE: ActionState = {
