@@ -27,6 +27,7 @@ Tandem is a mobile-first shared-household chore PWA. The repository contains the
 - Household dashboard, chore list, calendar, history, settings, and household views; occurrence completion, undo, skip, and reschedule flows.
 - Completion and activity records, plus Supabase Realtime invalidation for shared household data.
 - Per-user, per-chore reminder preferences, browser push-subscription management, a notification test route, delivery claims, and dynamic reminder text/lead handling.
+- IMPLEMENTED: The device-local test notification passes the current browser subscription endpoint through the authenticated path and targets only that subscription. Scheduled reminders retain their existing multi-device delivery behavior.
 - An installable portrait PWA with a pre-cached offline page only. Authenticated pages and data are intentionally network-only when offline.
 - IMPLEMENTED: Home rescheduling revalidates Home and Calendar, refreshes the initiating client, and withholds success feedback until refreshed occurrence props match the confirmed persisted date. This is not VERIFIED; production browser validation remains pending.
 

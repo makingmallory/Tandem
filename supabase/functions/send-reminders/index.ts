@@ -30,9 +30,15 @@ function reminderBody(claim: Claim) {
   return `${claim.chore_name} is due in ${claim.offset_value} ${unit}`;
 }
 
-async function sendToSubscriptions(userId: string, payload: Record<string, string>) {
-  const { data, error } = await admin.from("push_subscriptions")
+async function sendToSubscriptions(
+  userId: string,
+  payload: Record<string, string>,
+  subscriptionEndpoint?: string,
+) {
+  let query = admin.from("push_subscriptions")
     .select("id, endpoint, p256dh, auth").eq("user_id", userId);
+  if (subscriptionEndpoint) query = query.eq("endpoint", subscriptionEndpoint);
+  const { data, error } = await query;
   if (error) throw error;
   let sent = 0;
   for (const subscription of (data ?? []) as Subscription[]) {
@@ -84,19 +90,20 @@ Deno.serve(async (request) => {
     return json({ error: "Push secrets are not configured" }, 500);
   }
   webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
-  const body = await request.json().catch(() => ({})) as { mode?: string };
+  const body = await request.json().catch(() => ({})) as { mode?: string; subscriptionEndpoint?: string };
 
   if (body.mode === "test") {
     const authorization = request.headers.get("Authorization") ?? "";
     const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authorization } } });
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) return json({ error: "Unauthorized" }, 401);
+    if (!body.subscriptionEndpoint) return json({ error: "A push subscription is required" }, 400);
     const sent = await sendToSubscriptions(user.id, {
       title: pushTitle,
       body: "Notifications are working — nice!",
       url: "/settings/notifications",
       tag: `test-${user.id}-${Date.now()}`,
-    });
+    }, body.subscriptionEndpoint);
     return sent > 0 ? json({ sent }) : json({ error: "No active subscription" }, 409);
   }
 

@@ -41,7 +41,9 @@ export async function removePersonalPushSubscription(endpoint: string) {
   return supabase.rpc("remove_push_subscription", { p_endpoint: endpoint });
 }
 
-export async function sendPersonalTestPush() {
+export async function sendPersonalTestPush(subscriptionEndpoint: string) {
   const supabase = await createSupabaseServerClient();
-  return supabase.functions.invoke("send-reminders", { body: { mode: "test" } });
+  return supabase.functions.invoke("send-reminders", {
+    body: { mode: "test", subscriptionEndpoint },
+  });
 }

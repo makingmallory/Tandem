@@ -106,8 +106,12 @@ export function NotificationSettings({ initialDeviceCount }: Readonly<{ initialD
   });
 
   const test = () => startTransition(async () => {
+    if (!subscription) {
+      setMessage({ text: "This device does not have an active push subscription.", tone: "error" });
+      return;
+    }
     try {
-      const result = await sendTestPushAction();
+      const result = await sendTestPushAction(subscription.endpoint);
       setMessage({ text: result.message, tone: result.ok ? "success" : "error" });
     } catch {
       setMessage({ text: "The test notification could not be sent. Check your connection and try again.", tone: "error" });

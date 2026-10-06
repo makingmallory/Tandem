@@ -14,4 +14,12 @@ describe("push delivery architecture", () => {
     expect(source).toContain("is due in ${claim.offset_value}");
     expect(source).not.toMatch(/assigned|assignee|responsible/i);
   });
+
+  it("targets only the requested subscription for authenticated test pushes while scheduled delivery stays multi-device", async () => {
+    const source = await readFile(path.resolve(import.meta.dirname, "../../../supabase/functions/send-reminders/index.ts"), "utf8");
+    expect(source).toContain("subscriptionEndpoint?: string");
+    expect(source).toContain('query = query.eq("endpoint", subscriptionEndpoint)');
+    expect(source).toContain("}, body.subscriptionEndpoint)");
+    expect(source).toContain("sendToSubscriptions(claim.user_id, {");
+  });
 });

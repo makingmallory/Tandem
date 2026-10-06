@@ -57,10 +57,13 @@ export async function removePushSubscriptionAction(endpoint: string) {
   return { ok: true, message: "Notifications are off on this device." };
 }
 
-export async function sendTestPushAction() {
+export async function sendTestPushAction(subscriptionEndpoint: string) {
+  if (!subscriptionEndpoint) return { ok: false, message: "This device does not have an active push subscription." };
   const user = await getCurrentUser();
   if (!user) return { ok: false, message: "Please sign in first." };
-  const { error } = await sendPersonalTestPush();
-  if (error) return { ok: false, message: "The test notification could not be sent. Check the Edge Function setup." };
+  const { data, error } = await sendPersonalTestPush(subscriptionEndpoint);
+  if (error || !data || data.sent !== 1) {
+    return { ok: false, message: "The test notification could not be sent to this device. Check the Edge Function setup." };
+  }
   return { ok: true, message: "Test notification sent." };
 }
