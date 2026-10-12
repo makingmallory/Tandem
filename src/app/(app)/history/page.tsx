@@ -10,6 +10,7 @@ import { getCurrentHousehold } from "@/data/household/queries";
 import { formatTime } from "@/domain/formatters/dates";
 import { activityTitle, groupActivity } from "@/domain/history/groupActivity";
 import { isShellTestMode } from "@/lib/test-mode";
+import Link from "next/link";
 
 function EventIcon({ type }: Readonly<{ type: ActivityEvent["event_type"] }>) {
   const Icon = type === "chore_completed"
@@ -45,7 +46,9 @@ export default async function HistoryPage() {
                 <li className="activity-item" key={event.id}>
                   <EventIcon type={event.event_type} />
                   <div>
-                    <p className="activity-item__title">{activityTitle(event)}</p>
+                    <p className="activity-item__title">{event.chore_id && event.occurrence_id ?
+                      <Link className="history-occurrence-link" href={`/chores/${event.chore_id}/occurrences/${event.occurrence_id}`}>{activityTitle(event)}</Link>
+                      : activityTitle(event)}</p>
                     <p className="activity-item__meta">
                       {event.actor?.display_name ?? "Household member"} · {formatTime(event.created_at, HOUSEHOLD_TIME_ZONE)}
                     </p>

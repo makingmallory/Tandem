@@ -5,16 +5,18 @@ import { Pill } from "@/components/ui/Pill";
 import type { Chore } from "@/data/chores/types";
 import { formatRecurrence } from "@/domain/formatters/recurrence";
 
-export function ChoreCard({ chore }: Readonly<{ chore: Chore }>) {
+export function ChoreCard({ chore, roomName, variantName, compactTarget = false }: Readonly<{ chore: Chore; roomName?: string; variantName?: string; compactTarget?: boolean }>) {
+  const targetName = [roomName, variantName].filter(Boolean).join(" · ");
+  const displayName = compactTarget && targetName ? targetName : `${chore.name}${targetName ? ` · ${targetName}` : ""}`;
   return (
     <li>
       <Link
-        className={`chore-card${chore.is_active ? "" : " chore-card--paused"}`}
+        className={`chore-card${chore.is_active ? "" : " chore-card--paused"}${compactTarget ? " chore-card--target" : ""}`}
         href={`/chores/${chore.id}`}
       >
         <ChoreIcon iconKey={chore.icon_key} accentKey={chore.accent_key} />
         <span className="chore-card__body">
-          <span className="chore-card__name">{chore.name}</span>
+          <span className="chore-card__name" title={[chore.name, targetName].filter(Boolean).join(" · ")}>{displayName}</span>
           <span className="chore-card__schedule">
             {formatRecurrence({
               recurrenceType: chore.recurrence_type,

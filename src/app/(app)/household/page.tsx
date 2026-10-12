@@ -1,7 +1,8 @@
-import { Bell, ChevronRight, House, KeyRound } from "lucide-react";
+import { Bell, ChevronRight, House, KeyRound, MapPin } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { RoomManager } from "@/components/rooms/RoomManager";
 import { InviteCard } from "@/components/household/InviteCard";
 import { MemberList } from "@/components/household/MemberList";
 import { PageShell } from "@/components/layout/PageShell";
@@ -9,6 +10,9 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PhaseNotice } from "@/components/ui/PhaseNotice";
 import { getCurrentUser } from "@/data/auth/queries";
+import { getRoomContext } from "@/data/rooms/queries";
+import { PHASE8_PENDING_MESSAGE } from "@/data/rooms/copy";
+import { roomFixtures } from "@/data/rooms/test-fixtures";
 import { getCurrentHousehold } from "@/data/household/queries";
 import { isShellTestMode } from "@/lib/test-mode";
 
@@ -22,6 +26,7 @@ export default async function HouseholdPage() {
             description="The shell test keeps this page data-free while checking header geometry."
             accent="mint"
           />
+          <Card><h2 className="section-heading">Rooms</h2><RoomManager rooms={roomFixtures()} /></Card>
           <Card>
             <nav className="settings-list" aria-label="Personal settings">
               <Link className="settings-list__item" href="/settings/notifications">
@@ -43,6 +48,7 @@ export default async function HouseholdPage() {
 
   const [household, user] = await Promise.all([getCurrentHousehold(), getCurrentUser()]);
   if (!household || !user) redirect("/setup");
+  const { rooms, available } = await getRoomContext(household.id);
 
   return (
     <PageShell title="Settings" variant="root">
@@ -74,6 +80,20 @@ export default async function HouseholdPage() {
         </section>
 
         <InviteCard inviteCode={household.invite_code} />
+
+        <section className="section-stack" aria-labelledby="rooms-heading">
+          <div>
+            <h2 className="section-heading" id="rooms-heading">Rooms</h2>
+            <p className="section-supporting-copy">Locations for your shared routines.</p>
+          </div>
+          <Card className="settings-hub-card">
+            <div className="choice-card__heading">
+              <span className="settings-list__icon"><MapPin aria-hidden="true" size={20} /></span>
+              <div><p className="eyebrow">Household</p><p className="choice-card__title">Your rooms</p></div>
+            </div>
+            {available ? <RoomManager rooms={rooms.filter((room) => !room.archived_at)} /> : <p className="muted-copy">{PHASE8_PENDING_MESSAGE}</p>}
+          </Card>
+        </section>
 
         <section className="section-stack" aria-labelledby="personal-settings-heading">
           <div>

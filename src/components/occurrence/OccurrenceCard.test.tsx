@@ -23,6 +23,24 @@ function renderCard(occurrence = occurrenceFixture("2026-09-18", 0)) {
 }
 
 describe("OccurrenceCard completion details", () => {
+  it("renders visible applicable steps and derives In progress without changing scheduled status",()=>{
+    const occurrence=occurrenceFixture("2026-09-18",0);
+    renderCard({...occurrence,checklist_materialized:true,title_snapshot:"Clean Bathroom",room_name_snapshot:"Upstairs Bathroom",variant_name_snapshot:null,
+      checklist:[{id:"step1",household_id:occurrence.household_id,occurrence_id:occurrence.id,source_subtask_id:null,title:"Clean toilet",position:0,completed_at:"2026-09-18T12:00:00Z",completed_by:"user"},
+        {id:"step2",household_id:occurrence.household_id,occurrence_id:occurrence.id,source_subtask_id:null,title:"Clean shower",position:1,completed_at:null,completed_by:null}]});
+    expect(screen.getByRole("link",{name:"Clean Bathroom"})).toBeInTheDocument();
+    expect(screen.getByLabelText("Clean toilet")).toBeChecked();expect(screen.getByLabelText("Clean shower")).not.toBeChecked();
+    expect(screen.getByLabelText("Clean toilet")).toHaveClass("occurrence-checklist__input");
+    expect(screen.getByText("In progress (1/2)")).toBeVisible();
+    expect(screen.getByLabelText("Subtasks").closest("details")).toBeNull();
+  });
+  it("places room context beneath the title and links to its own chore", () => {
+    const occurrence = occurrenceFixture("2026-09-18", 0);
+    renderCard({ ...occurrence, chore: { ...occurrence.chore, room: { name: "Master Bathroom" } } });
+    expect(screen.getByRole("link", { name: "Wipe kitchen counters" })).toHaveAttribute("href", `/chores/${occurrence.chore.id}`);
+    expect(screen.getByText("Master Bathroom")).toHaveClass("occurrence-card__location");
+    expect(screen.getByRole("link", { name: "Wipe kitchen counters" }).compareDocumentPosition(screen.getByText("Master Bathroom")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
   it("renders an incomplete occurrence without completer information", () => {
     renderCard();
     expect(screen.getByText("Wipe kitchen counters")).toBeVisible();

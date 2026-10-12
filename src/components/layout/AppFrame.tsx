@@ -8,9 +8,11 @@ type AppFrameProps = {
   children: React.ReactNode;
   showNavigation?: boolean;
   householdId?: string | null;
+  phase8Available?: boolean;
+  categoryFeaturesAvailable?: boolean;
 };
 
-export function AppFrame({ children, showNavigation = true, householdId = null }: Readonly<AppFrameProps>) {
+export function AppFrame({ children, showNavigation = true, householdId = null, phase8Available = false, categoryFeaturesAvailable = false }: Readonly<AppFrameProps>) {
   const frame = (
     <AppChromeProvider authenticated={showNavigation}>
       <div className={`app-frame${showNavigation ? "" : " app-frame--without-nav"}`}>
@@ -23,7 +25,7 @@ export function AppFrame({ children, showNavigation = true, householdId = null }
   return (
     <QueryProvider>
       <ServiceWorkerRegistrar />
-      {householdId ? <RealtimeHouseholdProvider householdId={householdId}>{frame}</RealtimeHouseholdProvider> : frame}
+      {householdId ? <RealtimeHouseholdProvider householdId={householdId} phase8Available={phase8Available} categoryFeaturesAvailable={categoryFeaturesAvailable}>{frame}</RealtimeHouseholdProvider> : frame}
     </QueryProvider>
   );
 }

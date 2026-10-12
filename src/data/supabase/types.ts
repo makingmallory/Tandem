@@ -89,6 +89,36 @@ export type Database = {
           },
         ];
       };
+      rooms: {
+        Row: {
+          id: string;
+          household_id: string;
+          name: string;
+          archived_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          household_id: string;
+          name: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rooms_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       chores: {
         Row: {
           id: string;
@@ -102,6 +132,10 @@ export type Database = {
           anchor_date: string;
           weekdays: number[] | null;
           day_of_month: number | null;
+          room_id: string | null;
+          routine_id: string | null;
+          variant_id: string | null;
+          retired_at: string | null;
           is_active: boolean;
           created_by: string;
           created_at: string;
@@ -119,6 +153,10 @@ export type Database = {
           anchor_date?: string;
           weekdays?: number[] | null;
           day_of_month?: number | null;
+          room_id?: string | null;
+          routine_id?: string | null;
+          variant_id?: string | null;
+          retired_at?: string | null;
           is_active?: boolean;
           created_by: string;
           created_at?: string;
@@ -134,6 +172,10 @@ export type Database = {
           anchor_date?: string;
           weekdays?: number[] | null;
           day_of_month?: number | null;
+          room_id?: string | null;
+          routine_id?: string | null;
+          variant_id?: string | null;
+          retired_at?: string | null;
           is_active?: boolean;
           updated_at?: string;
         };
@@ -152,7 +194,55 @@ export type Database = {
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "chores_room_household_fkey";
+            columns: ["room_id", "household_id"];
+            isOneToOne: false;
+            referencedRelation: "rooms";
+            referencedColumns: ["id", "household_id"];
+          },
+          {
+            foreignKeyName: "chores_routine_household_fkey";
+            columns: ["routine_id", "household_id"];
+            isOneToOne: false;
+            referencedRelation: "routines";
+            referencedColumns: ["id", "household_id"];
+          },
+          {
+            foreignKeyName: "chores_variant_parent_fkey";
+            columns: ["variant_id", "routine_id", "household_id"];
+            isOneToOne: false;
+            referencedRelation: "routine_variants";
+            referencedColumns: ["id", "routine_id", "household_id"];
+          },
         ];
+      };
+      routines: {
+        Row: { id: string; household_id: string; name: string; kind: "chore" | "category"; archived_at: string | null; created_at: string; updated_at: string };
+        Insert: { household_id: string; name: string };
+        Update: { name?: string };
+        Relationships: [];
+      };
+      routine_subtasks: {
+        Row: { id: string; household_id: string; routine_id: string; title: string; position: number };
+        Insert: { household_id: string; routine_id: string; title: string; position: number };
+        Update: { title?: string; position?: number };
+        Relationships: [];
+      };
+      routine_variants: {
+        Row: { id: string; household_id: string; routine_id: string; name: string; archived_at: string | null; created_at: string };
+        Insert: never; Update: never; Relationships: [];
+      };
+      subtask_target_exclusions: {
+        Row: { subtask_id: string; chore_id: string; routine_id: string; household_id: string };
+        Insert: never; Update: never; Relationships: [];
+      };
+      occurrence_subtasks: {
+        Row: { id: string; household_id: string; occurrence_id: string; source_subtask_id: string | null;
+          title: string; position: number; completed_at: string | null; completed_by: string | null };
+        Insert: never; Update: never;
+        Relationships: [{ foreignKeyName: "occurrence_subtasks_occurrence_id_household_id_fkey"; columns: ["occurrence_id", "household_id"];
+          isOneToOne: false; referencedRelation: "chore_occurrences"; referencedColumns: ["id", "household_id"] }];
       };
       chore_occurrences: {
         Row: {
@@ -163,6 +253,10 @@ export type Database = {
           original_scheduled_date: string;
           status: "scheduled" | "completed" | "skipped";
           is_rescheduled: boolean;
+          checklist_materialized?: boolean;
+          title_snapshot?: string | null;
+          room_name_snapshot?: string | null;
+          variant_name_snapshot?: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -318,6 +412,22 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
+      set_occurrence_subtask: {
+        Args: { p_household_id: string; p_occurrence_id: string; p_subtask_id: string; p_complete: boolean };
+        Returns: Database["public"]["Tables"]["chore_occurrences"]["Row"][];
+      };
+      save_chore_plan: {
+        Args: { p_household_id: string; p_chore_id: string | null; p_plan: Json; p_today: string };
+        Returns: Database["public"]["Tables"]["chores"]["Row"][];
+      };
+      retire_chore: {
+        Args: { p_household_id: string; p_chore_id: string; p_entire_routine: boolean };
+        Returns: undefined;
+      };
+      archive_room: {
+        Args: { p_household_id: string; p_room_id: string };
+        Returns: undefined;
+      };
       create_household: {
         Args: { household_name: string };
         Returns: Array<{ id: string; name: string; invite_code: string }>;
@@ -411,6 +521,7 @@ export type Database = {
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 export type HouseholdRow = Database["public"]["Tables"]["households"]["Row"];
 export type HouseholdMemberRow = Database["public"]["Tables"]["household_members"]["Row"];
+export type RoomRow = Database["public"]["Tables"]["rooms"]["Row"];
 export type ChoreRow = Database["public"]["Tables"]["chores"]["Row"];
 export type ChoreOccurrenceRow = Database["public"]["Tables"]["chore_occurrences"]["Row"];
 export type OccurrenceCompletionRow = Database["public"]["Tables"]["occurrence_completions"]["Row"];

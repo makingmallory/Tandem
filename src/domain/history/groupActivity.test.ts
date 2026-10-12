@@ -11,6 +11,12 @@ function event(createdAt: string, type: ActivityEvent["event_type"] = "chore_com
 }
 
 describe("activity history", () => {
+  it("retains event-time chore and room names after later edits or retirement", () => {
+    const row = event("2026-10-12T12:00:00Z");
+    row.metadata = { chore_name: "Clean Bathroom", room_name: "Master Bathroom" };
+    row.chore = { id: "chore", name: "Renamed routine", icon_key: "bathtub", accent_key: "sky" };
+    expect(activityTitle(row)).toBe("Clean Bathroom · Master Bathroom");
+  });
   it("groups timestamps using the household timezone", () => {
     const groups = groupActivity([
       event("2026-09-18T05:30:00Z"),

@@ -8,6 +8,9 @@ import { PageShell } from "@/components/layout/PageShell";
 import { Card } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { getChore } from "@/data/chores/queries";
+import { getRoomContext } from "@/data/rooms/queries";
+import { getRoutineDetails } from "@/data/routines/queries";
+import { ChoreRemoveForm } from "@/components/chore/ChoreRemoveForm";
 import { getCurrentHousehold } from "@/data/household/queries";
 import { getChoreOccurrenceSummary } from "@/data/occurrences/queries";
 import { HOUSEHOLD_TIME_ZONE } from "@/config/time";
@@ -23,12 +26,14 @@ export default async function ChoreDetailsPage({
 }: Readonly<{ params: Promise<{ id: string }> }>) {
   const [{ id }, household, user] = await Promise.all([params, getCurrentHousehold(), getCurrentUser()]);
   if (!household || !user) redirect("/setup");
-  const [chore, occurrenceSummary, reminder] = await Promise.all([
+  const [chore, occurrenceSummary, reminder, roomContext] = await Promise.all([
     getChore(household.id, id),
     getChoreOccurrenceSummary(household.id, id),
     getPersonalChoreReminders(household.id, id, user.id),
+    getRoomContext(household.id),
   ]);
   if (!chore) notFound();
+  const routine = chore.routine_id ? await getRoutineDetails(household.id, chore.routine_id) : null;
   const today = todayDateOnly(new Date(), HOUSEHOLD_TIME_ZONE);
 
   const recurrence = formatRecurrence({
@@ -37,29 +42,34 @@ export default async function ChoreDetailsPage({
     weekdays: chore.weekdays,
     dayOfMonth: chore.day_of_month,
   });
+  const roomName = chore.room_id ? roomContext.rooms.find((room) => room.id === chore.room_id)?.name : undefined;
+  const kind = routine ? routine.routine.kind ?? "category" : "chore";
+  const variantName = routine?.variants.find((variant) => variant.id === chore.variant_id)?.name;
 
   return (
     <PageShell
-      title="Chore Details"
+      title={kind === "category" ? "Category Details" : "Chore Details"}
       variant="detail"
       backHref="/chores"
-      actions={
+      actions={!chore.retired_at ?
         <Link className="icon-button" href={`/chores/${chore.id}/edit`} aria-label={`Edit ${chore.name}`}>
           <Pencil aria-hidden="true" size={19} />
-        </Link>
+        </Link> : undefined
       }
     >
       <div className="page-stack">
         <Card className="chore-hero" tinted>
           <ChoreIcon iconKey={chore.icon_key} accentKey={chore.accent_key} size="large" />
           <div className="chore-hero__copy">
-            <Pill tone={chore.is_active ? "active" : "paused"}>{chore.is_active ? "Active" : "Paused"}</Pill>
+            <Pill tone={chore.is_active ? "active" : "paused"}>{chore.retired_at ? "Removed" : chore.is_active ? "Active" : "Paused"}</Pill>
             <h2>{chore.name}</h2>
+            {roomName ? <p>{roomName}</p> : null}
+            {variantName ? <p>{variantName}</p> : null}
             <p>{recurrence}</p>
           </div>
         </Card>
 
-        <Card>
+        {!chore.retired_at ? <Card>
           <ReminderForm
             choreId={chore.id}
             reminders={reminder}
@@ -67,7 +77,7 @@ export default async function ChoreDetailsPage({
             recurrenceType={chore.recurrence_type}
             intervalCount={chore.interval_count}
           />
-        </Card>
+        </Card> : <p className="muted-copy">This chore has been removed. Its history is kept.</p>}
 
         <Card className="definition-card">
           <div>
@@ -81,9 +91,26 @@ export default async function ChoreDetailsPage({
               {chore.description || "No notes added."}
             </p>
           </div>
+          <div>
+            <p className="eyebrow">Room</p>
+            <p className={roomName ? "definition-card__value" : "muted-copy"}>
+              {roomName ?? "No room selected."}
+            </p>
+          </div>
         </Card>
 
-        {occurrenceSummary.actionable ? (
+        {routine?.subtasks.length && !routine.featuresAvailable ? <p className="muted-copy">Actionable category checklists will be available after the pending database migration.</p> : null}
+        {routine && !chore.retired_at ? <Card><details>
+          <summary>{kind === "category" ? "Category" : "Chore"} targets ({routine.targets.length})</summary>
+          <ul className="routine-steps">{routine.targets.map((target) => <li key={target.id}>
+            <Link href={`/chores/${target.id}`}>{[roomContext.rooms.find((room) => room.id === target.room_id)?.name,
+              routine.variants.find((variant) => variant.id === target.variant_id)?.name].filter(Boolean).join(" · ") || "No room or variant"}</Link>
+            {` · ${formatRecurrence({ recurrenceType: target.recurrence_type, intervalCount: target.interval_count, weekdays: target.weekdays, dayOfMonth: target.day_of_month })}`}
+          </li>)}</ul>
+          <Link className="app-button app-button--secondary" href={`/chores/${chore.id}/edit`}>Edit {kind} &amp; targets</Link>
+        </details></Card> : null}
+
+        {occurrenceSummary.actionable && !chore.retired_at ? (
           <section className="section-stack" aria-labelledby="current-occurrence-heading">
             <h2 className="section-heading" id="current-occurrence-heading">Current or next occurrence</h2>
             <ul className="occurrence-list">
@@ -106,10 +133,19 @@ export default async function ChoreDetailsPage({
                 HOUSEHOLD_TIME_ZONE,
               )}
             </p>
+            {occurrenceSummary.latestCompleted.checklist?.length ? <ul className="occurrence-list">
+              <OccurrenceCard occurrence={occurrenceSummary.latestCompleted} today={today} showDate />
+            </ul> : null}
           </Card>
         ) : null}
 
-        <ChoreStatusForm choreId={chore.id} isActive={chore.is_active} />
+        {!chore.retired_at ? <>
+          <ChoreStatusForm choreId={chore.id} isActive={chore.is_active} kind={kind} />
+          {roomContext.available ? <div className="section-stack">
+            {!chore.routine_id || chore.room_id || chore.variant_id ? <ChoreRemoveForm choreId={chore.id} roomTarget={Boolean(chore.room_id || chore.variant_id)} /> : null}
+            {chore.routine_id ? <ChoreRemoveForm choreId={chore.id} entireRoutine kind={kind} /> : null}
+          </div> : null}
+        </> : null}
       </div>
     </PageShell>
   );

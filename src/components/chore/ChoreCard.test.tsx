@@ -16,6 +16,10 @@ function chore(isActive: boolean): Chore {
     anchor_date: "2026-09-22",
     weekdays: [2],
     day_of_month: null,
+    room_id: null,
+    routine_id: null,
+    variant_id: null,
+    retired_at: null,
     is_active: isActive,
     created_by: "user-1",
     created_at: "2026-09-22T00:00:00Z",
@@ -34,4 +38,10 @@ describe("ChoreCard action alignment", () => {
       expect(container.querySelector(".chore-card__body")).not.toContainElement(screen.getByText(label));
     },
   );
+});
+
+it("shows room context in the existing title line", () => {
+  render(<ul><ChoreCard roomName="Master Bathroom" chore={chore(true)} /></ul>);
+  expect(screen.getByText("Clean bathroom · Master Bathroom")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Clean bathroom/ })).not.toHaveClass("chore-card--target");
 });

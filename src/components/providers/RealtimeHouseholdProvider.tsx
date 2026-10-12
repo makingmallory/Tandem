@@ -10,6 +10,8 @@ import { occurrenceKeys } from "@/data/occurrences/keys";
 import { createSupabaseBrowserClient } from "@/data/supabase/browser";
 
 const REALTIME_TABLES = ["chores", "chore_occurrences", "occurrence_completions", "activity_events"] as const;
+const ROUTINE_TABLES = ["rooms", "routines", "routine_subtasks"] as const;
+const CHECKLIST_TABLES = ["routine_variants", "subtask_target_exclusions", "occurrence_subtasks"] as const;
 const LOCAL_MUTATION_SETTLE_MS = 600;
 
 type LocalMutationContextValue = {
@@ -27,7 +29,9 @@ export function useLocalHouseholdMutation() {
 export function RealtimeHouseholdProvider({
   householdId,
   children,
-}: Readonly<{ householdId: string; children: React.ReactNode }>) {
+  phase8Available = false,
+  categoryFeaturesAvailable = false,
+}: Readonly<{ householdId: string; children: React.ReactNode; phase8Available?: boolean; categoryFeaturesAvailable?: boolean }>) {
   const [supabase] = useState(createSupabaseBrowserClient);
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -70,7 +74,7 @@ export function RealtimeHouseholdProvider({
     };
 
     let channel = supabase.channel(`household:${householdId}`);
-    for (const table of REALTIME_TABLES) {
+    for (const table of [...REALTIME_TABLES, ...(phase8Available ? ROUTINE_TABLES : []), ...(categoryFeaturesAvailable ? CHECKLIST_TABLES : [])]) {
       channel = channel.on(
         "postgres_changes",
         { event: "*", schema: "public", table, filter: `household_id=eq.${householdId}` },
@@ -83,7 +87,7 @@ export function RealtimeHouseholdProvider({
       if (refreshTimer) clearTimeout(refreshTimer);
       void supabase.removeChannel(channel);
     };
-  }, [householdId, queryClient, router, supabase]);
+  }, [householdId, phase8Available, categoryFeaturesAvailable, queryClient, router, supabase]);
 
   return <LocalMutationContext value={localMutationContext}>{children}</LocalMutationContext>;
 }

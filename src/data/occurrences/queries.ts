@@ -2,6 +2,8 @@ import { cache } from "react";
 import { createSupabaseServerClient } from "@/data/supabase/server";
 import { normalizeOccurrence, normalizeOccurrences } from "@/data/occurrences/normalize";
 import type { OccurrenceWithChore, RawOccurrenceWithChore } from "@/data/occurrences/types";
+import { getRoomContext } from "@/data/rooms/queries";
+import { getCategoryFeaturesAvailable } from "@/data/routines/capabilities";
 
 const occurrenceSelection = `
   id, household_id, chore_id, scheduled_date, original_scheduled_date,
@@ -16,16 +18,35 @@ const occurrenceSelection = `
   )
 `;
 
+async function selectionFor(householdId: string) {
+  let selection = (await getRoomContext(householdId)).available
+    ? occurrenceSelection.replace("day_of_month, is_active", "day_of_month, is_active, retired_at, room:rooms(name)") : occurrenceSelection;
+  if (await getCategoryFeaturesAvailable(householdId)) {
+    selection = selection.replace("status, is_rescheduled, created_at, updated_at,", "status, is_rescheduled, created_at, updated_at, checklist_materialized, title_snapshot, room_name_snapshot, variant_name_snapshot,");
+    selection = selection.replace("is_active, retired_at, room:rooms(name)", "is_active, retired_at, room:rooms(name), variant:routine_variants(name), routine:routines(kind)");
+    selection += ", checklist:occurrence_subtasks(id, household_id, occurrence_id, source_subtask_id, title, position, completed_at, completed_by)";
+  }
+  return selection;
+}
+
 function occurrenceError(error: unknown) {
   throw new Error("We could not load your scheduled chores.", { cause: error });
 }
+
+export const getOccurrence = cache(async (householdId: string, choreId: string, occurrenceId: string) => {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.from("chore_occurrences").select(await selectionFor(householdId))
+    .eq("household_id", householdId).eq("chore_id", choreId).eq("id", occurrenceId).maybeSingle();
+  if (error) occurrenceError(error);
+  return data ? normalizeOccurrence(data as unknown as RawOccurrenceWithChore) : null;
+});
 
 export const getOccurrencesForRange = cache(
   async (householdId: string, start: string, end: string): Promise<OccurrenceWithChore[]> => {
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("chore_occurrences")
-      .select(occurrenceSelection)
+      .select(await selectionFor(householdId))
       .eq("household_id", householdId)
       .eq("chore.is_active", true)
       .gte("scheduled_date", start)
@@ -46,7 +67,7 @@ export const getOverdueOccurrences = cache(
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("chore_occurrences")
-      .select(occurrenceSelection)
+      .select(await selectionFor(householdId))
       .eq("household_id", householdId)
       .eq("chore.is_active", true)
       .eq("status", "scheduled")
@@ -64,7 +85,7 @@ export const getUpcomingOccurrences = cache(
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("chore_occurrences")
-      .select(occurrenceSelection)
+      .select(await selectionFor(householdId))
       .eq("household_id", householdId)
       .eq("chore.is_active", true)
       .gt("scheduled_date", after)
@@ -82,10 +103,11 @@ export const getChoreOccurrenceSummary = cache(
     latestCompleted: OccurrenceWithChore | null;
   }> => {
     const supabase = await createSupabaseServerClient();
+    const selection = await selectionFor(householdId);
     const [actionableResult, completedResult] = await Promise.all([
       supabase
         .from("chore_occurrences")
-        .select(occurrenceSelection)
+        .select(selection)
         .eq("household_id", householdId)
         .eq("chore_id", choreId)
         .eq("status", "scheduled")
@@ -94,7 +116,7 @@ export const getChoreOccurrenceSummary = cache(
         .maybeSingle(),
       supabase
         .from("chore_occurrences")
-        .select(occurrenceSelection)
+        .select(selection)
         .eq("household_id", householdId)
         .eq("chore_id", choreId)
         .eq("status", "completed")

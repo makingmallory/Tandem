@@ -30,6 +30,10 @@ Tandem is a mobile-first shared-household chore PWA. The repository contains the
 - IMPLEMENTED: The device-local test notification passes the current browser subscription endpoint through the authenticated path and targets only that subscription. Scheduled reminders retain their existing multi-device delivery behavior.
 - An installable portrait PWA with a pre-cached offline page only. Authenticated pages and data are intentionally network-only when offline.
 - IMPLEMENTED: Home rescheduling revalidates Home and Calendar, refreshes the initiating client, and withholds success feedback until refreshed occurrence props match the confirmed persisted date. This is not VERIFIED; production browser validation remains pending.
+- VERIFIED by the user: Room creation, assigning multiple Rooms, independent per-Room schedules, room-specific Calendar rendering (tested with Vacuuming), and Active Chores root grouping. Phase 8 migrations `20261012000000_phase8_rooms_routines.sql` and `20261012120000_phase8_categories_checklists_variants.sql` have been applied remotely.
+- IMPLEMENTED, not VERIFIED: Chore vs Category Add chooser, Category editing with collapsed Rooms, target-specific Subtask applicability, persisted occurrence checklist snapshots/checkoff, derived In Progress and transactional parent completion/Undo, actionable Calendar checklists, and local Variants with explicit Room + Variant targets. Standalone-to-subtask conversion remains deferred.
+- IMPLEMENTED, not VERIFIED: compact child-target hierarchy and root Category Edit action in Active Chores, plus refined circular Calendar Subtask completion styling.
+- IMPLEMENTED: Fixed the Chores server-render runtime regression by keeping the root Category Edit link outside the native expand/collapse summary; no Client Component boundary was added.
 
 ## Product Invariants
 
@@ -102,7 +106,9 @@ npm run db:lint
 
 ## Current / Next Work
 
-No later product feature phase is established by current repository history. The next documented focus is safe production configuration and environment validation: Supabase migration/function setup, Edge Function secrets and deployment, the five-minute cron job, Vercel environment configuration, and real-device PWA/push/realtime testing.
+- IMPLEMENTED, not VERIFIED: Suggested Chores / Starter Categories browser, static initial starter catalog, preview, and existing-form prefill/import flow. Area filtering/grouping remains PLANNED.
+
+Production configuration and real-device PWA/push/realtime validation also remain pending; see the setup documentation in `docs/`.
 
 ## Recent Meaningful Checkpoints
 

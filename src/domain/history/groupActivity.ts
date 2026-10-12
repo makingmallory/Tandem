@@ -30,7 +30,9 @@ export function activityChoreName(event: ActivityEvent) {
   const metadata = event.metadata && typeof event.metadata === "object" && !Array.isArray(event.metadata)
     ? event.metadata
     : {};
-  return event.chore?.name ?? (typeof metadata.chore_name === "string" ? metadata.chore_name : "Chore");
+  const name = typeof metadata.chore_name === "string" ? metadata.chore_name : event.chore?.name ?? "Chore";
+  return [name, typeof metadata.room_name === "string" ? metadata.room_name : null,
+    typeof metadata.variant_name === "string" ? metadata.variant_name : null].filter(Boolean).join(" · ");
 }
 
 export function activityTitle(event: ActivityEvent) {

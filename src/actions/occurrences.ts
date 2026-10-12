@@ -11,6 +11,7 @@ import {
 } from "@/data/completions/mutations";
 import { getCurrentHousehold } from "@/data/household/queries";
 import { isDateOnly } from "@/domain/dates/date-only";
+import { setOccurrenceSubtask } from "@/data/checklists/mutations";
 
 function mutationErrorMessage(code?: string) {
   if (code === "42501") return "You do not have access to update this occurrence.";
@@ -25,6 +26,7 @@ function refreshOccurrenceViews() {
   // initiating view. Realtime updates every other open household client.
   revalidatePath("/");
   revalidatePath("/calendar");
+  revalidatePath("/chores/[id]", "page");
   refresh();
 }
 
@@ -45,6 +47,16 @@ export async function completeOccurrenceAction(
   if (error) return formErrorState(mutationErrorMessage(error.code));
   refreshOccurrenceViews();
   return successState("Chore marked done.");
+}
+
+export async function setOccurrenceSubtaskAction(occurrenceId: string, subtaskId: string, complete: boolean): Promise<ActionState> {
+  const household = await householdId();
+  if (!household) return formErrorState("Please sign in and join a household first.");
+  if (typeof complete !== "boolean") return formErrorState("Choose whether this subtask is complete.");
+  const { error } = await setOccurrenceSubtask(household, occurrenceId, subtaskId, complete);
+  if (error) return formErrorState(mutationErrorMessage(error.code));
+  refreshOccurrenceViews();
+  return successState("Checklist saved.");
 }
 
 export async function undoOccurrenceAction(

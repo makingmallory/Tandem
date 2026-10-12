@@ -5,6 +5,7 @@ export function normalizeOccurrence(row: RawOccurrenceWithChore): OccurrenceWith
   return {
     ...occurrence,
     completion: embeddedCompletions[0] ?? null,
+    ...(row.checklist ? { checklist: [...row.checklist].sort((a, b) => a.position - b.position) } : {}),
   };
 }
 

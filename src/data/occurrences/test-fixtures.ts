@@ -53,3 +53,15 @@ export function homeOccurrenceFixtures(today: DateOnly) {
     upcoming: [occurrenceFixture(addDays(today, 2), 1), occurrenceFixture(addDays(today, 4), 2)],
   };
 }
+
+export function categoryOccurrenceFixture(date: DateOnly): OccurrenceWithChore {
+  const occurrence = occurrenceFixture(date, 9);
+  return { ...occurrence, title_snapshot: "Clean Bathroom", room_name_snapshot: "Upstairs Bathroom", variant_name_snapshot: null,
+    checklist_materialized: true, chore: { ...occurrence.chore, name: "Clean Bathroom", room: { name: "Upstairs Bathroom" } },
+    checklist: ["Clean toilet", "Clean mirror", "Clean shower"].map((title, index) => ({
+      id: `90000000-0000-4000-8000-00000000000${index}`, occurrence_id: occurrence.id, household_id: occurrence.household_id,
+      source_subtask_id: null, title, position: index, completed_at: index === 0 ? "2026-10-12T12:00:00Z" : null,
+      completed_by: index === 0 ? "40000000-0000-4000-8000-000000000001" : null,
+    })),
+  };
+}

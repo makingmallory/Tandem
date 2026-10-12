@@ -26,6 +26,8 @@ type OccurrenceActionsProps = {
   scheduledDate: DateOnly;
   today?: DateOnly;
   compact?: boolean;
+  hasChecklist?: boolean;
+  category?: boolean;
 };
 
 function RealtimeMutationGuard() {
@@ -49,6 +51,8 @@ export function OccurrenceActions({
   scheduledDate,
   today,
   compact = false,
+  hasChecklist = false,
+  category = false,
 }: Readonly<OccurrenceActionsProps>) {
   const router = useRouter();
   const [completionState, completionAction] = useActionState(
@@ -86,7 +90,7 @@ export function OccurrenceActions({
                 {status === "completed" ? <Check aria-hidden="true" size={20} strokeWidth={3} /> : null}
                 <span className="visually-hidden">{status === "completed" ? "Completed" : "Incomplete"}</span>
               </>
-            ) : status === "completed" ? "Completed" : "Mark as Done"}
+            ) : status === "completed" ? "Completed" : hasChecklist ? "Complete all" : "Mark as Done"}
           </SubmitButton>
         </form>
       ) : null}
@@ -148,7 +152,7 @@ export function OccurrenceActions({
             </>
           ) : null}
           <Link className="app-button app-button--tertiary" href={`/chores/${choreId}/edit`}>
-            <Pencil aria-hidden="true" size={17} /> Edit chore
+            <Pencil aria-hidden="true" size={17} /> Edit {category ? "category" : "chore"}
           </Link>
         </div>
       </details> : null}

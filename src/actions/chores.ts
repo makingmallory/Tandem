@@ -12,6 +12,11 @@ import { createChoreWithOccurrences, setChoreActive, updateChore } from "@/data/
 import { todayDateOnly, type DateOnly } from "@/domain/dates/date-only";
 import { generateOccurrenceDates, occurrenceHorizonEnd } from "@/domain/recurrence/generateOccurrences";
 import { choreFormDataToInput, choreSchema } from "@/lib/validation/chore";
+import { parseChorePlan } from "@/lib/validation/chore-plan";
+import { saveChorePlan, retireChore } from "@/data/routines/mutations";
+import { getRoomContext } from "@/data/rooms/queries";
+import { PHASE8_PENDING_MESSAGE } from "@/data/rooms/copy";
+import { getCategoryFeaturesAvailable } from "@/data/routines/capabilities";
 
 function choreErrorMessage(code?: string) {
   if (code === "42501") return "You do not have access to update chores in this household.";
@@ -42,6 +47,7 @@ export async function createChoreAction(
   _previousState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  if (formData.has("schedulePlan")) return savePlan(null, formData);
   const parsed = choreSchema.safeParse(choreFormDataToInput(formData));
   if (!parsed.success) return validationErrorState(parsed.error.flatten().fieldErrors);
 
@@ -68,6 +74,7 @@ export async function updateChoreAction(
   _previousState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  if (formData.has("schedulePlan")) return savePlan(choreId, formData);
   const parsed = choreSchema.safeParse(choreFormDataToInput(formData));
   if (!parsed.success) return validationErrorState(parsed.error.flatten().fieldErrors);
 
@@ -104,7 +111,7 @@ export async function toggleChoreAction(
   if (!context) return formErrorState("Please sign in and join a household first.");
 
   const chore = await getChore(context.household.id, choreId);
-  if (!chore) return formErrorState("That chore could not be found.");
+  if (!chore || chore.retired_at) return formErrorState("That chore could not be found.");
   const today = todayDateOnly(new Date(), HOUSEHOLD_TIME_ZONE);
   const occurrenceDates = nextIsActive
     ? generateFutureDates({
@@ -129,4 +136,48 @@ export async function toggleChoreAction(
   revalidatePath("/chores");
   revalidatePath(`/chores/${choreId}`);
   return successState(nextIsActive ? "Chore resumed." : "Chore paused.");
+}
+
+async function savePlan(choreId: string | null, formData: FormData): Promise<ActionState> {
+  const context = await getChoreContext();
+  if (!context) return formErrorState("Please sign in and join a household first.");
+  const today = todayDateOnly(new Date(), HOUSEHOLD_TIME_ZONE);
+  const parsed = parseChorePlan(formData, today);
+  if ("error" in parsed) return { ...formErrorState(parsed.error!), fieldErrors: parsed.fieldErrors
+    ? Object.fromEntries(Object.entries(parsed.fieldErrors).filter(([, messages]) => messages?.length)) as Record<string, string[]> : undefined };
+  const { available } = await getRoomContext(context.household.id);
+  let destination = choreId;
+  if (available) {
+    const features = await getCategoryFeaturesAvailable(context.household.id);
+    const current = choreId ? await getChore(context.household.id, choreId) : null;
+    if (!features && (parsed.variants.length || parsed.subtasks.some((task) => task.excludedTargets.length) ||
+      (parsed.kind === "chore" && parsed.roomIds.length > 0) ||
+      (parsed.kind === "category" && !current?.routine_id && !parsed.roomIds.length && !parsed.subtasks.length))) {
+      return formErrorState("Apply the pending Category checklist/Variants migration before saving these options. Existing room-based Categories can still be edited.");
+    }
+    const { data, error } = await saveChorePlan(context.household.id, choreId, parsed.payload, today);
+    if (error || !data?.length) return formErrorState(choreErrorMessage(error?.code));
+    destination = data.find((chore) => chore.id === choreId)?.id ?? data[0]!.id;
+  } else {
+    if (parsed.roomIds.length || parsed.subtasks.length || parsed.variants.length || parsed.kind === "category") return formErrorState(PHASE8_PENDING_MESSAGE);
+    const dates = generateFutureDates(parsed.input, today);
+    const result = choreId
+      ? await updateChore(context.household.id, choreId, parsed.input, today, dates)
+      : await createChoreWithOccurrences(context.household.id, parsed.input, dates);
+    if (result.error || !result.data) return formErrorState(choreErrorMessage(result.error?.code));
+    destination = result.data.id;
+  }
+  revalidatePath("/", "layout");
+  redirect(`/chores/${destination}`);
+}
+
+export async function retireChoreAction(choreId: string, entireRoutine: boolean,
+  _state: ActionState, _form: FormData): Promise<ActionState> {
+  void _state; void _form;
+  const context = await getChoreContext();
+  if (!context) return formErrorState("Please sign in and join a household first.");
+  const { error } = await retireChore(context.household.id, choreId, entireRoutine);
+  if (error) return formErrorState("We could not remove this chore. Please try again.");
+  revalidatePath("/", "layout");
+  redirect("/chores");
 }

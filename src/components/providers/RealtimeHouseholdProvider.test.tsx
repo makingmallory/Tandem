@@ -41,11 +41,11 @@ describe("RealtimeHouseholdProvider", () => {
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
     const view = render(
       <QueryClientProvider client={queryClient}>
-        <RealtimeHouseholdProvider householdId="home-1"><span>Household</span></RealtimeHouseholdProvider>
+        <RealtimeHouseholdProvider householdId="home-1" phase8Available><span>Household</span></RealtimeHouseholdProvider>
       </QueryClientProvider>,
     );
     expect(supabase.channel).toHaveBeenCalledWith("household:home-1");
-    expect(channel.on).toHaveBeenCalledTimes(4);
+    expect(channel.on).toHaveBeenCalledTimes(7);
     expect(subscribe).toHaveBeenCalledOnce();
 
     act(() => handlers[0]!());
@@ -67,6 +67,7 @@ describe("RealtimeHouseholdProvider", () => {
       </QueryClientProvider>,
     );
     fireEvent.click(view.getByRole("button", { name: "Start local mutation" }));
+    expect(channel.on).toHaveBeenCalledTimes(4);
     act(() => handlers[0]!());
     expect(invalidate).toHaveBeenCalledTimes(4);
     expect(refresh).not.toHaveBeenCalled();
@@ -77,5 +78,16 @@ describe("RealtimeHouseholdProvider", () => {
     await act(async () => vi.advanceTimersByTimeAsync(80));
     expect(refresh).toHaveBeenCalledOnce();
     vi.useRealTimers();
+  });
+  it("refreshes shared views for checklist and variant changes after the incremental migration",()=>{
+    const queryClient=new QueryClient();
+    const view=render(<QueryClientProvider client={queryClient}>
+      <RealtimeHouseholdProvider householdId="home-1" phase8Available categoryFeaturesAvailable><span>Household</span></RealtimeHouseholdProvider>
+    </QueryClientProvider>);
+    expect(channel.on).toHaveBeenCalledTimes(10);
+    for(const table of ["routine_variants","subtask_target_exclusions","occurrence_subtasks"]) {
+      expect(channel.on).toHaveBeenCalledWith("postgres_changes",{event:"*",schema:"public",table,filter:"household_id=eq.home-1"},expect.any(Function));
+    }
+    view.unmount();vi.useRealTimers();
   });
 });

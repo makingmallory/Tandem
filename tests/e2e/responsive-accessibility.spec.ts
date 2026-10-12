@@ -19,6 +19,7 @@ test("primary routes stay inside realistic phone viewports", async ({ page }) =>
 test("shared page chrome and forms expose essential accessibility semantics", async ({ page }) => {
   await page.goto("/chores/new");
   await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: /Chore A single task/ }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Add a Chore" })).toBeVisible();
   const unlabeledFields = await page.locator("input:not([type='hidden']), textarea, select").evaluateAll((fields) =>
     fields.filter((field) => !(field as HTMLInputElement).labels?.length && !field.getAttribute("aria-label")).length,

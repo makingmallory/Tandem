@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { HOUSEHOLD_TIME_ZONE } from "@/config/time";
 import { getCurrentHousehold } from "@/data/household/queries";
 import { getOccurrencesForRange } from "@/data/occurrences/queries";
-import { occurrenceFixture } from "@/data/occurrences/test-fixtures";
+import { occurrenceFixture, categoryOccurrenceFixture } from "@/data/occurrences/test-fixtures";
 import { addDays, isDateOnly, startOfWeek, todayDateOnly, type DateOnly } from "@/domain/dates/date-only";
 import { formatLongDate } from "@/domain/formatters/dates";
 import { isShellTestMode } from "@/lib/test-mode";
@@ -24,6 +24,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   if (isShellTestMode()) {
     occurrences = [
       occurrenceFixture(selectedDate, 0),
+      categoryOccurrenceFixture(selectedDate),
       occurrenceFixture(addDays(weekStart, 2), 1),
       occurrenceFixture(addDays(weekStart, 5), 2),
     ];
