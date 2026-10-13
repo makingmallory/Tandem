@@ -420,6 +420,14 @@ export type Database = {
         Args: { p_household_id: string; p_chore_id: string | null; p_plan: Json; p_today: string };
         Returns: Database["public"]["Tables"]["chores"]["Row"][];
       };
+      update_category_target: {
+        Args: {
+          p_household_id: string; p_chore_id: string; p_recurrence_type: string; p_interval_count: number;
+          p_anchor_date: string; p_weekdays: number[] | null; p_day_of_month: number | null;
+          p_occurrence_dates: string[]; p_applicable_subtask_ids: string[]; p_today: string;
+        };
+        Returns: Database["public"]["Tables"]["chores"]["Row"][];
+      };
       retire_chore: {
         Args: { p_household_id: string; p_chore_id: string; p_entire_routine: boolean };
         Returns: undefined;

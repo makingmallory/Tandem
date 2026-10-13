@@ -17,6 +17,8 @@ import { saveChorePlan, retireChore } from "@/data/routines/mutations";
 import { getRoomContext } from "@/data/rooms/queries";
 import { PHASE8_PENDING_MESSAGE } from "@/data/rooms/copy";
 import { getCategoryFeaturesAvailable } from "@/data/routines/capabilities";
+import { updateCategoryTarget } from "@/data/routines/mutations";
+import { z } from "zod";
 
 function choreErrorMessage(code?: string) {
   if (code === "42501") return "You do not have access to update chores in this household.";
@@ -96,6 +98,46 @@ export async function updateChoreAction(
   revalidatePath("/calendar");
   revalidatePath("/chores");
   revalidatePath(`/chores/${choreId}`);
+  redirect(`/chores/${choreId}`);
+}
+
+export async function updateCategoryTargetAction(
+  choreId: string,
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const context = await getChoreContext();
+  if (!context) return formErrorState("Please sign in and join a household first.");
+  const target = await getChore(context.household.id, choreId);
+  if (!target?.routine_id || target.retired_at) return formErrorState("That Category target could not be found.");
+
+  const schedule = choreSchema.safeParse({
+    name: target.name, description: target.description ?? "", iconKey: target.icon_key, accentKey: target.accent_key,
+    recurrenceType: formData.get("recurrenceType"), intervalCount: formData.get("intervalCount") ?? 1,
+    weekdays: formData.getAll("weekdays"), dayOfMonth: formData.get("dayOfMonth") || null,
+    anchorDate: formData.get("anchorDate"),
+  });
+  if (!schedule.success) return validationErrorState(schedule.error.flatten().fieldErrors);
+
+  const applicableSubtaskIds = z.array(z.string().uuid()).max(50).safeParse(
+    formData.getAll("applicableSubtaskIds"),
+  );
+  if (!applicableSubtaskIds.success) return formErrorState("Choose valid Category subtasks.");
+
+  const today = todayDateOnly(new Date(), HOUSEHOLD_TIME_ZONE);
+  const occurrenceDates = generateFutureDates(schedule.data, today);
+  const { error } = await updateCategoryTarget(context.household.id, choreId, {
+    recurrenceType: schedule.data.recurrenceType, intervalCount: schedule.data.intervalCount,
+    anchorDate: schedule.data.anchorDate, weekdays: schedule.data.weekdays, dayOfMonth: schedule.data.dayOfMonth,
+    occurrenceDates, applicableSubtaskIds: applicableSubtaskIds.data, today,
+  });
+  if (error) return formErrorState(choreErrorMessage(error.code));
+
+  revalidatePath("/");
+  revalidatePath("/calendar");
+  revalidatePath("/chores");
+  revalidatePath(`/chores/${choreId}`);
+  revalidatePath(`/chores/${choreId}/edit`);
   redirect(`/chores/${choreId}`);
 }
 

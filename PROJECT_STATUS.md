@@ -31,8 +31,12 @@ Tandem is a mobile-first shared-household chore PWA. The repository contains the
 - An installable portrait PWA with a pre-cached offline page only. Authenticated pages and data are intentionally network-only when offline.
 - IMPLEMENTED: Home rescheduling revalidates Home and Calendar, refreshes the initiating client, and withholds success feedback until refreshed occurrence props match the confirmed persisted date. This is not VERIFIED; production browser validation remains pending.
 - VERIFIED by the user: Room creation, assigning multiple Rooms, independent per-Room schedules, room-specific Calendar rendering (tested with Vacuuming), and Active Chores root grouping. Phase 8 migrations `20261012000000_phase8_rooms_routines.sql` and `20261012120000_phase8_categories_checklists_variants.sql` have been applied remotely.
-- IMPLEMENTED, not VERIFIED: Chore vs Category Add chooser, Category editing with collapsed Rooms, target-specific Subtask applicability, persisted occurrence checklist snapshots/checkoff, derived In Progress and transactional parent completion/Undo, actionable Calendar checklists, and local Variants with explicit Room + Variant targets. Standalone-to-subtask conversion remains deferred.
+- VERIFIED by the user: Category checklist behavior, local Variants, and target-specific Subtask applicability.
+- VERIFIED by the user: target-scoped Room/Variant editing.
+- IMPLEMENTED, not VERIFIED: Chore vs Category Add chooser, Category editing with collapsed Rooms, persisted occurrence checklist snapshots/checkoff, derived In Progress and transactional parent completion/Undo, actionable Calendar checklists, and local Variants with explicit Room + Variant targets. Standalone-to-subtask conversion remains deferred.
 - IMPLEMENTED, not VERIFIED: compact child-target hierarchy and root Category Edit action in Active Chores, plus refined circular Calendar Subtask completion styling.
+- IMPLEMENTED, not VERIFIED: compact icon-only Calendar completion actions; target-scoped Room/Variant editor with target-specific schedule and Subtask applicability editing, backed by incremental migration `20261013100000_phase8_target_scoped_category_editing.sql` and its narrow scoped RPC.
+- IMPLEMENTED, not VERIFIED: consolidated child-target detail and inline edit experience, with compact schedule, Subtask applicability, and personal reminder settings.
 - IMPLEMENTED: Fixed the Chores server-render runtime regression by keeping the root Category Edit link outside the native expand/collapse summary; no Client Component boundary was added.
 
 ## Product Invariants

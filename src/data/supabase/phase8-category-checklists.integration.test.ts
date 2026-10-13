@@ -6,6 +6,7 @@ import { beforeAll, afterAll, describe, expect, it } from "vitest";
 
 const OWNER="91111111-1111-4111-8111-111111111111", MEMBER="92222222-2222-4222-8222-222222222222", OUTSIDER="93333333-3333-4333-8333-333333333333";
 const EXTENSION="20261012120000_phase8_categories_checklists_variants.sql";
+const TARGET_EXTENSION="20261013100000_phase8_target_scoped_category_editing.sql";
 let db: PGlite; let home: string; let otherHome: string; let upstairs: string; let downstairs: string;
 let bathroom: Chore[]; let originalCompletion: unknown;
 type Chore={id:string; routine_id:string|null; room_id:string|null; variant_id:string|null};
@@ -34,7 +35,7 @@ describe("Category checklists, explicit variant targets, completion and history"
       create schema auth; create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb default '{}'::jsonb);
       create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;`);
     const dir=path.resolve(import.meta.dirname,"../../../supabase/migrations");
-    for(const file of (await readdir(dir)).filter((file)=>file.endsWith(".sql")&&file!==EXTENSION).sort()) await db.exec(await readFile(path.join(dir,file),"utf8"));
+    for(const file of (await readdir(dir)).filter((file)=>file.endsWith(".sql")&&file!==EXTENSION&&file!==TARGET_EXTENSION).sort()) await db.exec(await readFile(path.join(dir,file),"utf8"));
     await db.exec(`insert into auth.users values('${OWNER}','category-owner@example.com','{}'),('${MEMBER}','category-member@example.com','{}'),('${OUTSIDER}','category-other@example.com','{}')`);
     await auth();
     const h=(await db.query<{id:string;invite_code:string}>("select * from public.create_household('Category home')")).rows[0]!;home=h.id;
@@ -49,7 +50,8 @@ describe("Category checklists, explicit variant targets, completion and history"
     await db.query("select * from public.complete_occurrence($1,$2)",[old.id,home]);
     originalCompletion=(await db.query("select * from public.occurrence_completions where occurrence_id=$1",[old.id])).rows;
     await db.query("update public.rooms set name='Renamed upstairs room' where id=$1",[upstairs]);
-    await db.exec("reset role");await db.exec(await readFile(path.join(dir,EXTENSION),"utf8"));await auth();
+    await db.exec("reset role");await db.exec(await readFile(path.join(dir,EXTENSION),"utf8"));
+    await db.exec(await readFile(path.join(dir,TARGET_EXTENSION),"utf8"));await auth();
   });
   afterAll(async()=>db.close());
   it("backfills existing categories without replacing occurrences or completion attribution",async()=>{

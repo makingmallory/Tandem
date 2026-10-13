@@ -20,6 +20,8 @@ import { formatRecurrence } from "@/domain/formatters/recurrence";
 import { getCurrentUser } from "@/data/auth/queries";
 import { getPersonalChoreReminders } from "@/data/reminders/queries";
 import { ReminderForm } from "@/components/reminder/ReminderForm";
+import { CategoryTargetForm } from "@/components/chore/CategoryTargetForm";
+import { updateCategoryTargetAction } from "@/actions/chores";
 
 export default async function ChoreDetailsPage({
   params,
@@ -45,13 +47,15 @@ export default async function ChoreDetailsPage({
   const roomName = chore.room_id ? roomContext.rooms.find((room) => room.id === chore.room_id)?.name : undefined;
   const kind = routine ? routine.routine.kind ?? "category" : "chore";
   const variantName = routine?.variants.find((variant) => variant.id === chore.variant_id)?.name;
+  const categoryTarget = routine?.routine.kind === "category";
+  const excludedSubtasks = new Set(routine?.exclusions.filter((exclusion) => exclusion.chore_id === chore.id).map((exclusion) => exclusion.subtask_id));
 
   return (
     <PageShell
       title={kind === "category" ? "Category Details" : "Chore Details"}
       variant="detail"
       backHref="/chores"
-      actions={!chore.retired_at ?
+      actions={!chore.retired_at && !categoryTarget ?
         <Link className="icon-button" href={`/chores/${chore.id}/edit`} aria-label={`Edit ${chore.name}`}>
           <Pencil aria-hidden="true" size={19} />
         </Link> : undefined
@@ -69,7 +73,17 @@ export default async function ChoreDetailsPage({
           </div>
         </Card>
 
-        {!chore.retired_at ? <Card>
+        {categoryTarget && !chore.retired_at && routine ? <>
+          <CategoryTargetForm action={updateCategoryTargetAction.bind(null, chore.id)}
+            initialSchedule={{ recurrenceType: chore.recurrence_type, intervalCount: chore.interval_count, anchorDate: chore.anchor_date,
+              weekdays: chore.weekdays ?? [], dayOfMonth: chore.day_of_month ?? 1 }}
+            subtasks={routine.subtasks} initialApplicableSubtaskIds={routine.subtasks.filter((subtask) => !excludedSubtasks.has(subtask.id)).map((subtask) => subtask.id)} />
+          <Card className="target-settings__section"><ReminderForm compact
+            choreId={chore.id} reminders={reminder} fallbackTimeZone={HOUSEHOLD_TIME_ZONE}
+            recurrenceType={chore.recurrence_type} intervalCount={chore.interval_count} /></Card>
+          <Link className="app-button app-button--secondary target-settings__parent-link" href={`/chores/${chore.id}/edit`}>Edit category &amp; targets</Link>
+        </> : !chore.retired_at ? <>
+          <Card>
           <ReminderForm
             choreId={chore.id}
             reminders={reminder}
@@ -77,9 +91,9 @@ export default async function ChoreDetailsPage({
             recurrenceType={chore.recurrence_type}
             intervalCount={chore.interval_count}
           />
-        </Card> : <p className="muted-copy">This chore has been removed. Its history is kept.</p>}
+          </Card>
 
-        <Card className="definition-card">
+          <Card className="definition-card">
           <div>
             <p className="eyebrow">Schedule</p>
             <p className="definition-card__value">{recurrence}</p>
@@ -97,10 +111,10 @@ export default async function ChoreDetailsPage({
               {roomName ?? "No room selected."}
             </p>
           </div>
-        </Card>
+          </Card>
+        </> : <p className="muted-copy">This chore has been removed. Its history is kept.</p>}
 
-        {routine?.subtasks.length && !routine.featuresAvailable ? <p className="muted-copy">Actionable category checklists will be available after the pending database migration.</p> : null}
-        {routine && !chore.retired_at ? <Card><details>
+        {routine && !categoryTarget && !chore.retired_at ? <Card><details>
           <summary>{kind === "category" ? "Category" : "Chore"} targets ({routine.targets.length})</summary>
           <ul className="routine-steps">{routine.targets.map((target) => <li key={target.id}>
             <Link href={`/chores/${target.id}`}>{[roomContext.rooms.find((room) => room.id === target.room_id)?.name,

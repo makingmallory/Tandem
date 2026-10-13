@@ -27,17 +27,17 @@ describe("OccurrenceActions", () => {
     }));
 
     render(<OccurrenceActions occurrenceId="occurrence-1" choreId="chore-1" choreName="Clean bathroom" status="scheduled" scheduledDate="2026-09-18" />);
-    fireEvent.click(screen.getByRole("button", { name: "Mark Clean bathroom as complete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mark Clean bathroom as done" }));
 
     await waitFor(() => {
-      const button = screen.getByRole("button", { name: "Mark Clean bathroom as complete" });
+      const button = screen.getByRole("button", { name: "Mark Clean bathroom as done" });
       expect(button).toBeDisabled();
-      expect(button).toHaveTextContent("Saving…");
+      expect(button.querySelector(".lucide-loader-circle")).toBeInTheDocument();
     });
     act(() => resolveCompletion?.({ status: "success", successMessage: "Chore marked done." }));
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Mark Clean bathroom as complete" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Mark Clean bathroom as done" })).toBeEnabled();
       expect(screen.getByText("Chore marked done.")).toBeVisible();
     });
   });
@@ -46,10 +46,10 @@ describe("OccurrenceActions", () => {
     completeAction.mockResolvedValue({ status: "error", formError: "We could not update this chore." });
     render(<OccurrenceActions occurrenceId="occurrence-1" choreId="chore-1" choreName="Clean bathroom" status="scheduled" scheduledDate="2026-09-18" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Mark Clean bathroom as complete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mark Clean bathroom as done" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Mark Clean bathroom as complete" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Mark Clean bathroom as done" })).toBeEnabled();
       expect(screen.getByRole("alert")).toHaveTextContent("We could not update this chore.");
     });
   });
@@ -58,8 +58,15 @@ describe("OccurrenceActions", () => {
     render(<OccurrenceActions occurrenceId="occurrence-1" choreId="chore-1" choreName="Clean bathroom" status="scheduled" scheduledDate="2026-09-18" />);
 
     const actionCluster = screen.getByTestId("occurrence-action-cluster");
-    expect(screen.getByRole("button", { name: "Mark Clean bathroom as complete" })).toHaveTextContent("Mark as Done");
-    expect(actionCluster).toContainElement(screen.getByLabelText("More actions for Clean bathroom"));
+    const completionButton = screen.getByRole("button", { name: "Mark Clean bathroom as done" });
+    const menuButton = screen.getByLabelText("More actions for Clean bathroom");
+    expect(completionButton).toHaveClass("occurrence-actions__completion--compact");
+    expect(completionButton.querySelector(".lucide-check")).toBeInTheDocument();
+    expect(completionButton).not.toHaveTextContent("Mark as Done");
+    expect(completionButton).not.toHaveTextContent("Complete all");
+    expect(actionCluster).toContainElement(menuButton);
+    expect(completionButton.parentElement?.parentElement).toBe(actionCluster);
+    expect(menuButton.closest(".occurrence-actions")).toBe(actionCluster);
     expect(screen.queryByRole("button", { name: "Skip this time" })).not.toBeVisible();
     fireEvent.click(screen.getByLabelText("More actions for Clean bathroom"));
     expect(screen.getByRole("button", { name: /Skip this time/ })).toBeVisible();
@@ -71,7 +78,7 @@ describe("OccurrenceActions", () => {
     render(<OccurrenceActions occurrenceId="occurrence-1" choreId="chore-1" choreName="Clean bathroom" status="completed" scheduledDate="2026-09-18" />);
 
     const undoButton = screen.getByRole("button", { name: "Mark Clean bathroom as incomplete" });
-    expect(undoButton).toHaveTextContent("Completed");
+    expect(undoButton).toHaveClass("occurrence-actions__completion--compact");
     fireEvent.click(undoButton);
     expect(undoAction).toHaveBeenCalled();
     fireEvent.click(screen.getByLabelText("More actions for Clean bathroom"));
@@ -82,15 +89,26 @@ describe("OccurrenceActions", () => {
   it("renders the Home presentation with an accessible completion circle and compact action menu", () => {
     render(<OccurrenceActions compact occurrenceId="occurrence-1" choreId="chore-1" choreName="Clean bathroom" status="scheduled" scheduledDate="2026-09-18" today="2026-09-18" />);
 
-    const button = screen.getByRole("button", { name: "Mark Clean bathroom as complete" });
+    const button = screen.getByRole("button", { name: "Mark Clean bathroom as done" });
     expect(button).toHaveClass("occurrence-actions__completion--compact");
     expect(button).toHaveAttribute("aria-pressed", "false");
-    expect(button).toHaveTextContent("Incomplete");
+    expect(button).toHaveClass("occurrence-actions__completion--compact");
     fireEvent.click(screen.getByLabelText("More actions for Clean bathroom"));
     expect(screen.getByRole("button", { name: /Tomorrow/ })).toBeVisible();
     expect(screen.getByLabelText("Choose another date")).toBeVisible();
     expect(screen.getByRole("button", { name: /Skip this time/ })).toBeVisible();
     expect(screen.queryByRole("link", { name: /Edit chore/ })).not.toBeInTheDocument();
+  });
+
+  it("uses a distinct compact checklist control with an explicit complete-all label", () => {
+    render(<OccurrenceActions occurrenceId="occurrence-1" choreId="chore-1" choreName="Clean Bathroom" status="scheduled" scheduledDate="2026-09-18" hasChecklist category />);
+
+    const button = screen.getByRole("button", { name: "Complete all Clean Bathroom subtasks" });
+    expect(button).toHaveClass("occurrence-actions__completion--compact");
+    expect(button.querySelector(".lucide-list-checks")).toBeInTheDocument();
+    expect(button).not.toHaveTextContent("Complete all");
+    expect(button).not.toHaveTextContent("Mark as Done");
+    expect(screen.getByLabelText("More actions for Clean Bathroom")).toBeVisible();
   });
 
   it("reschedules Home chores to the next household-local date", async () => {

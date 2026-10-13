@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Settings, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useId, useRef, useState } from "react";
 import { saveReminderAction } from "@/actions/reminders";
@@ -45,6 +45,14 @@ function toLocalTime(hour: string, minute: string, period: "AM" | "PM") {
 function displayTime(value: string) {
   const time = timeParts(value);
   return time ? `${time.hour}:${time.minute} ${time.period}` : value;
+}
+
+function reminderSummary(reminders: ChoreReminderRow[]) {
+  const selected = reminders.filter((reminder) => reminder.enabled);
+  if (!selected.length) return "Off";
+  return selected.map((reminder) => reminder.offset_value === 0
+    ? `${displayTime(reminder.local_time.slice(0, 5))} day of`
+    : `${reminder.offset_value} ${reminderUnitLabel(reminder.offset_unit, reminder.offset_value)} before · ${displayTime(reminder.local_time.slice(0, 5))}`).join(" · ");
 }
 
 function ReminderTimeSelector({
@@ -148,12 +156,14 @@ export function ReminderForm({
   reminders,
   fallbackTimeZone,
   recurrenceType,
+  compact = false,
 }: Readonly<{
   choreId: string;
   reminders: ChoreReminderRow[];
   fallbackTimeZone: string;
   recurrenceType: ChoreRow["recurrence_type"];
   intervalCount: number;
+  compact?: boolean;
 }>) {
   const [state, formAction] = useActionState(saveReminderAction.bind(null, choreId), INITIAL_ACTION_STATE);
   const [enabled, setEnabled] = useState(reminders.some((reminder) => reminder.enabled));
@@ -161,6 +171,7 @@ export function ReminderForm({
   const [drafts, setDrafts] = useState<ReminderDraft[]>(() => existingDrafts(reminders, daily));
   const nextKey = useRef(0);
   const idBase = useId();
+  const [editing, setEditing] = useState(!compact);
   const timezone = reminders[0]?.timezone ?? fallbackTimeZone;
   const serializedReminders = drafts.map(({ offsetValue, offsetUnit, localTime }) => ({ offsetValue, offsetUnit, localTime }));
 
@@ -179,12 +190,18 @@ export function ReminderForm({
     }]);
   }
 
+  if (compact && !editing) return <div className="reminder-form reminder-form--compact">
+    <div className="reminder-form__heading"><div><p className="eyebrow">Reminders</p><p className="target-settings__summary">{reminderSummary(reminders)}</p></div>
+      <AppButton type="button" variant="tertiary" className="icon-button" aria-label="Edit notification settings" onClick={() => setEditing(true)}><Settings aria-hidden="true" size={18} /></AppButton>
+    </div>
+  </div>;
+
   return (
-    <form action={formAction} className="reminder-form">
+    <form action={formAction} className={`reminder-form${compact ? " reminder-form--compact" : ""}`}>
       <div className="reminder-form__heading">
         <div>
-          <p className="eyebrow">Your reminders</p>
-          <p className="muted-copy">Personal to you. This does not assign or claim the shared chore.</p>
+          <p className="eyebrow">{compact ? "Reminders" : "Your reminders"}</p>
+          {!compact ? <p className="muted-copy">Personal to you. This does not assign or claim the shared chore.</p> : null}
         </div>
         <Pill tone={enabled ? "active" : "neutral"}>
           {enabled ? `${drafts.length} notification${drafts.length === 1 ? "" : "s"}` : "Notifications off"}
@@ -309,8 +326,8 @@ export function ReminderForm({
       <input name="reminders" type="hidden" value={JSON.stringify(serializedReminders)} />
       <input name="timezone" type="hidden" value={timezone} />
       <div className="button-row">
-        <SubmitButton pendingLabel="Saving notifications…">Save notification settings</SubmitButton>
-        <Link className="app-button app-button--secondary" href="/settings/notifications">Notification settings</Link>
+        <SubmitButton pendingLabel="Saving…">{compact ? "Save" : "Save notification settings"}</SubmitButton>
+        {compact ? <AppButton type="button" variant="tertiary" onClick={() => setEditing(false)}>Cancel</AppButton> : <Link className="app-button app-button--secondary" href="/settings/notifications">Notification settings</Link>}
       </div>
       <FormMessage state={state} />
     </form>

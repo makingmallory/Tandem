@@ -41,6 +41,14 @@ describe("OccurrenceCard completion details", () => {
     expect(screen.getByText("Master Bathroom")).toHaveClass("occurrence-card__location");
     expect(screen.getByRole("link", { name: "Wipe kitchen counters" }).compareDocumentPosition(screen.getByText("Master Bathroom")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
+  it("keeps room and variant on separate secondary lines so the title can use the available card width", () => {
+    const occurrence = occurrenceFixture("2026-09-18", 0);
+    renderCard({ ...occurrence, chore: { ...occurrence.chore, name: "Laundry", room: { name: "Laundry Room" }, variant: { name: "Dark clothes" } } });
+    const body = screen.getByRole("link", { name: "Laundry" }).parentElement!;
+    expect(body).toHaveClass("occurrence-card__body");
+    expect(screen.getByText("Laundry Room")).toHaveClass("occurrence-card__location");
+    expect(screen.getByText("Dark clothes")).toHaveClass("occurrence-card__variant");
+  });
   it("renders an incomplete occurrence without completer information", () => {
     renderCard();
     expect(screen.getByText("Wipe kitchen counters")).toBeVisible();

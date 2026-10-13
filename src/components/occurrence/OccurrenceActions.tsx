@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, Check, Ellipsis, LoaderCircle, Pencil, SkipForward } from "lucide-react";
+import { CalendarClock, Check, Ellipsis, ListChecks, LoaderCircle, Pencil, SkipForward } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useId } from "react";
@@ -73,24 +73,27 @@ export function OccurrenceActions({
     if (rescheduleState.status === "success") router.refresh();
   }, [rescheduleState.status, router]);
 
+  const completionLabel = status === "completed"
+    ? `Mark ${choreName} as incomplete`
+    : hasChecklist
+      ? `Complete all ${choreName} subtasks`
+      : `Mark ${choreName} as done`;
+
   return (
     <div className={`occurrence-actions${compact ? " occurrence-actions--compact" : ""}`} data-testid="occurrence-action-cluster">
       {status === "scheduled" || status === "completed" ? (
         <form action={completionAction} className="occurrence-actions__primary">
           <RealtimeMutationGuard />
           <SubmitButton
-            aria-label={status === "completed" ? `Mark ${choreName} as incomplete` : `Mark ${choreName} as complete`}
+            aria-label={completionLabel}
             aria-pressed={status === "completed"}
-            className={`occurrence-actions__completion${compact ? " occurrence-actions__completion--compact" : ""}`}
-            pendingLabel={compact ? <><LoaderCircle aria-hidden="true" size={18} /><span className="visually-hidden">Saving</span></> : "Saving…"}
+            className="occurrence-actions__completion occurrence-actions__completion--compact"
+            pendingLabel={<LoaderCircle aria-hidden="true" size={18} />}
             variant={status === "completed" ? "secondary" : "primary"}
           >
-            {compact ? (
-              <>
-                {status === "completed" ? <Check aria-hidden="true" size={20} strokeWidth={3} /> : null}
-                <span className="visually-hidden">{status === "completed" ? "Completed" : "Incomplete"}</span>
-              </>
-            ) : status === "completed" ? "Completed" : hasChecklist ? "Complete all" : "Mark as Done"}
+            {status === "completed" ? <Check aria-hidden="true" size={20} strokeWidth={3} />
+              : hasChecklist ? <ListChecks aria-hidden="true" size={20} strokeWidth={2.5} />
+              : <Check aria-hidden="true" size={20} strokeWidth={3} />}
           </SubmitButton>
         </form>
       ) : null}

@@ -39,7 +39,7 @@ describe("Phase 8 rooms, routines, per-room scheduling and retirement", () => {
       create function auth.uid() returns uuid language sql stable
       as $$ select nullif(current_setting('request.jwt.claim.sub', true),'')::uuid $$;`);
     const directory = path.resolve(import.meta.dirname, "../../../supabase/migrations");
-    for (const file of (await readdir(directory)).filter((file) => file.endsWith(".sql") && !file.startsWith("20261012")).sort()) {
+    for (const file of (await readdir(directory)).filter((file) => file.endsWith(".sql") && !file.startsWith("20261012") && !file.startsWith("20261013")).sort()) {
       await db.exec(await readFile(path.join(directory, file), "utf8"));
     }
     await db.exec(`insert into auth.users values ('${OWNER}','owner8@example.com','{}'),

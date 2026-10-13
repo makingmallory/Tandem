@@ -1060,6 +1060,24 @@ details > summary { cursor: pointer; font-weight: var(--weight-semibold); }
   margin: 0;
 }
 
+.target-settings { display: grid; gap: var(--space-4); }
+.target-settings__section { display: grid; gap: var(--space-3); }
+.target-settings__heading { display: flex; gap: var(--space-3); align-items: start; justify-content: space-between; }
+.target-settings__heading > div { min-width: 0; }
+.target-settings__summary { margin: var(--space-1) 0 0; color: var(--color-text-muted); font-size: var(--type-body-small-size); }
+.target-settings__editor { display: grid; gap: var(--space-3); }
+.target-settings__schedule-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.target-settings__schedule-row label { display: grid; gap: var(--space-1); font-size: var(--type-body-small-size); font-weight: var(--weight-semibold); }
+.target-settings__weekdays { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: 0; border: 0; }
+.target-settings__weekdays legend { width: 100%; margin-bottom: var(--space-1); font-size: var(--type-body-small-size); font-weight: var(--weight-semibold); }
+.target-settings__weekdays label { display: inline-flex; gap: 0.3rem; align-items: center; font-size: var(--type-caption-size); }
+.target-settings__form-actions { display: flex; gap: var(--space-2); align-items: center; }
+.target-settings__form-actions .app-button { min-height: var(--touch-target); }
+.target-settings__subtask-summary { display: grid; gap: var(--space-1); padding: 0; margin: var(--space-1) 0 0; list-style: none; }
+.target-settings__subtask-summary li { display: flex; gap: var(--space-2); align-items: center; color: var(--color-text-muted); font-size: var(--type-body-small-size); }
+.target-settings__subtask-summary svg { color: var(--color-brand-strong); }
+.target-settings__parent-link { justify-self: start; }
+
 .chore-hero__copy h2 {
   font-size: var(--type-section-title-size);
   font-weight: var(--weight-extrabold);
@@ -1445,7 +1463,7 @@ details > summary { cursor: pointer; font-weight: var(--weight-semibold); }
 .occurrence-actions {
   display: grid;
   position: relative;
-  grid-template-columns: auto var(--touch-target);
+  grid-template-columns: repeat(2, var(--touch-target));
   gap: var(--space-2);
   grid-area: actions;
   align-items: center;
@@ -1457,10 +1475,12 @@ details > summary { cursor: pointer; font-weight: var(--weight-semibold); }
   gap: var(--space-2);
 }
 
-.occurrence-actions__primary .app-button {
-  min-height: 2.6rem;
-  padding: var(--space-2) var(--space-3);
-  white-space: nowrap;
+.occurrence-actions__primary,
+.occurrence-actions__more > summary.icon-button {
+  width: var(--touch-target);
+  min-width: var(--touch-target);
+  height: var(--touch-target);
+  min-height: var(--touch-target);
 }
 
 .occurrence-actions__completion.app-button--secondary {
@@ -1733,6 +1753,9 @@ details > summary { cursor: pointer; font-weight: var(--weight-semibold); }
   display: grid;
   gap: var(--space-4);
 }
+
+.reminder-form--compact { gap: var(--space-3); }
+.reminder-form--compact .reminder-form__heading { align-items: center; }
 
 .reminder-form__heading {
   display: flex;
@@ -2008,18 +2031,6 @@ details > summary { cursor: pointer; font-weight: var(--weight-semibold); }
   .frequency-option__copy {
     grid-template-columns: 1fr;
     gap: var(--space-1);
-  }
-
-  .occurrence-card {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-      "icon body"
-      ". actions";
-    row-gap: var(--space-2);
-  }
-
-  .occurrence-actions {
-    justify-self: start;
   }
 
   .occurrence-card[data-presentation="home"] {

@@ -41,6 +41,16 @@ function renderForm(reminders: ChoreReminderRow[] = [], recurrenceType: "weekly"
 }
 
 describe("ReminderForm", () => {
+  it("shows a compact reminder summary until its inline settings are requested", () => {
+    render(<ReminderForm choreId="chore-1" reminders={[reminder("due", 0, "day", "08:00")]} fallbackTimeZone="America/Chicago" recurrenceType="weekly" intervalCount={1} compact />);
+    expect(screen.getByText("8:00 AM day of")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Edit notification settings" })).toBeVisible();
+    expect(screen.queryByRole("switch", { name: /Notifications/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Edit notification settings" }));
+    expect(screen.getByRole("switch", { name: /Notifications/ })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Save" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Notification settings" })).not.toBeInTheDocument();
+  });
   it("progressively reveals a compact notification builder", () => {
     renderForm();
     const toggle = screen.getByRole("switch", { name: /Notifications/ });
