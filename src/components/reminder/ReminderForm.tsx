@@ -4,7 +4,7 @@ import { Plus, Settings, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useId, useRef, useState } from "react";
 import { saveReminderAction } from "@/actions/reminders";
-import { INITIAL_ACTION_STATE } from "@/actions/state";
+import { INITIAL_ACTION_STATE, type ActionState } from "@/actions/state";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { AppButton } from "@/components/ui/AppButton";
 import { FormMessage } from "@/components/ui/FormMessage";
@@ -165,7 +165,6 @@ export function ReminderForm({
   intervalCount: number;
   compact?: boolean;
 }>) {
-  const [state, formAction] = useActionState(saveReminderAction.bind(null, choreId), INITIAL_ACTION_STATE);
   const [enabled, setEnabled] = useState(reminders.some((reminder) => reminder.enabled));
   const daily = recurrenceType === "daily";
   const [drafts, setDrafts] = useState<ReminderDraft[]>(() => existingDrafts(reminders, daily));
@@ -173,6 +172,11 @@ export function ReminderForm({
   const idBase = useId();
   const [editing, setEditing] = useState(!compact);
   const timezone = reminders[0]?.timezone ?? fallbackTimeZone;
+  const [state, formAction] = useActionState(async (previousState: ActionState, formData: FormData) => {
+    const nextState = await saveReminderAction(choreId, previousState, formData);
+    if (compact && nextState.status === "success") setEditing(false);
+    return nextState;
+  }, INITIAL_ACTION_STATE);
   const serializedReminders = drafts.map(({ offsetValue, offsetUnit, localTime }) => ({ offsetValue, offsetUnit, localTime }));
 
   function updateDraft(key: string, update: Partial<ReminderDefinition>) {
@@ -225,6 +229,7 @@ export function ReminderForm({
 
       {enabled ? (
         <div className="reminder-builder">
+          {daily ? <p className="muted-copy">Daily chores use one reminder on the due date.</p> : null}
           <div className="reminder-builder__heading">
             <span className="field-label">Remind me</span>
             <span className="muted-copy">Every 5 minutes · {timezone}</span>

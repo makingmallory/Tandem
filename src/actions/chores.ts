@@ -141,6 +141,32 @@ export async function updateCategoryTargetAction(
   redirect(`/chores/${choreId}`);
 }
 
+export async function updateChoreScheduleAction(
+  choreId: string,
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const context = await getChoreContext();
+  if (!context) return formErrorState("Please sign in and join a household first.");
+  const chore = await getChore(context.household.id, choreId);
+  if (!chore || chore.retired_at) return formErrorState("That chore could not be found.");
+
+  const parsed = choreSchema.safeParse({
+    name: chore.name, description: chore.description ?? "", iconKey: chore.icon_key, accentKey: chore.accent_key,
+    recurrenceType: formData.get("recurrenceType"), intervalCount: formData.get("intervalCount") ?? 1,
+    weekdays: formData.getAll("weekdays"), dayOfMonth: formData.get("dayOfMonth") || null,
+    anchorDate: formData.get("anchorDate"),
+  });
+  if (!parsed.success) return validationErrorState(parsed.error.flatten().fieldErrors);
+
+  const today = todayDateOnly(new Date(), HOUSEHOLD_TIME_ZONE);
+  const { error } = await updateChore(context.household.id, choreId, parsed.data, today, generateFutureDates(parsed.data, today));
+  if (error) return formErrorState(choreErrorMessage(error.code));
+
+  revalidatePath("/"); revalidatePath("/calendar"); revalidatePath("/chores"); revalidatePath(`/chores/${choreId}`);
+  redirect(`/chores/${choreId}`);
+}
+
 export async function toggleChoreAction(
   choreId: string,
   nextIsActive: boolean,

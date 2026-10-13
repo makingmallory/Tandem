@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Trash2 } from "lucide-react";
 import { useActionState, useState } from "react";
 import type { ActionState } from "@/actions/state";
 import { INITIAL_ACTION_STATE } from "@/actions/state";
@@ -12,9 +12,11 @@ import { ScheduleFields } from "@/components/chore/ScheduleFields";
 import type { RoomRow } from "@/data/supabase/types";
 import { CHORE_ACCENTS } from "@/domain/chores/accents";
 import { CHORE_ICONS } from "@/domain/chores/icons";
-import { sameSchedule, targetKey, resolveTargets, type ScheduleValues, type SubtaskValue, type VariantValue, type TargetValue } from "@/lib/validation/chore-plan";
+import { schedulesAreShared, targetKey, resolveTargets, type ScheduleValues, type SubtaskValue, type VariantValue, type TargetValue } from "@/lib/validation/chore-plan";
 import { PHASE8_PENDING_MESSAGE } from "@/data/rooms/copy";
 import { formatRecurrence } from "@/domain/formatters/recurrence";
+import { formatMonthDay } from "@/domain/formatters/dates";
+import type { DateOnly } from "@/domain/dates/date-only";
 
 export type ChoreFormValues = ScheduleValues & { name: string; description: string; iconKey: string; accentKey: string };
 export function ChoreForm({ action, initialValues, mode, rooms, available = true, initialRoomIds = [],
@@ -37,7 +39,9 @@ export function ChoreForm({ action, initialValues, mode, rooms, available = true
     anchorDate: initialValues.anchorDate, weekdays: initialValues.weekdays, dayOfMonth: initialValues.dayOfMonth,
   });
   const [schedules, setSchedules] = useState(initialSchedules);
-  const [customize, setCustomize] = useState(Object.values(initialSchedules).some((item) => !sameSchedule(item, initialValues)));
+  const [customize, setCustomize] = useState(() => !schedulesAreShared(Object.values(initialSchedules)));
+  const [editingSharedSchedule, setEditingSharedSchedule] = useState(mode === "create");
+  const [editingTargetKey, setEditingTargetKey] = useState<string | null>(null);
   const [roomsOpen, setRoomsOpen] = useState(initialRoomsOpen || Boolean(state.fieldErrors?.targets || state.fieldErrors?.roomIds));
   const selectableRooms = rooms.filter((room) => !room.archived_at);
   const selectedTargets = resolveTargets(roomIds, variants, explicitTargets);
@@ -166,20 +170,21 @@ export function ChoreForm({ action, initialValues, mode, rooms, available = true
     </Card>
     <Card className="chore-form__section">
       <p className="eyebrow">The rhythm</p>
-      {selectedTargets.length > 1 || customize ? <div className="button-row">
-        <button type="button" className="app-button app-button--secondary" onClick={() => {
-          if (customize && !window.confirm(`Apply ${formatRecurrence(schedule)}, starting ${schedule.anchorDate}, to every selected target?`)) return;
-          setCustomize(false);
-        }} aria-pressed={!customize}>Apply same schedule</button>
-        <button type="button" className="app-button app-button--tertiary" onClick={() => {
-          if (!customize) setSchedules(Object.fromEntries(selectedTargets.map((target) => [targetKey(target), schedule])));
-          setCustomize(true);
-        }} aria-pressed={customize}>{variants.length ? "Customize schedule by target" : "Customize schedule by room"}</button>
-      </div> : null}
-      {customize && selectedTargets.length ? selectedTargets.map((target) => <details key={targetKey(target)} className="room-schedule" open={Boolean(state.fieldErrors?.anchorDate || state.fieldErrors?.weekdays || state.fieldErrors?.intervalCount || state.fieldErrors?.recurrenceType || state.fieldErrors?.dayOfMonth || state.fieldErrors?.schedules)}>
-        <summary>{targetLabel(target)}</summary>
-        <ScheduleFields prefix={`${targetKey(target)}-`} value={schedules[targetKey(target)] ?? schedule} onChange={(next) => setSchedules({ ...schedules, [targetKey(target)]: next })} />
-      </details>) : <ScheduleFields value={schedule} onChange={setSchedule} errors={state.fieldErrors} />}
+      {customize && selectedTargets.length ? <>
+        <p className="muted-copy">Custom schedules</p>
+        <div className="parent-schedule-list">{selectedTargets.map((target) => {
+          const key = targetKey(target); const targetSchedule = schedules[key] ?? schedule; const editing = editingTargetKey === key;
+          return <div className="parent-schedule-row" key={key}><div><strong>{targetLabel(target)}</strong>{!editing ? <p>{formatRecurrence(targetSchedule)} · Starts {formatMonthDay(targetSchedule.anchorDate as DateOnly)}</p> : null}</div>
+            {!editing ? <button className="icon-button parent-schedule-row__edit" type="button" aria-label={`Edit schedule for ${targetLabel(target)}`} onClick={() => setEditingTargetKey(key)}><Pencil aria-hidden="true" size={16} /></button> : null}
+            {editing ? <div className="parent-schedule-row__editor"><ScheduleFields prefix={`${key}-`} value={targetSchedule} onChange={(next) => setSchedules({ ...schedules, [key]: next })} /><button type="button" className="app-button app-button--tertiary" onClick={() => setEditingTargetKey(null)}>Done</button></div> : null}
+          </div>;
+        })}</div>
+        <button type="button" className="app-button app-button--secondary" onClick={() => { setSchedule(schedules[targetKey(selectedTargets[0]!)] ?? schedule); setCustomize(false); setEditingSharedSchedule(true); }}>Convert to same schedule</button>
+      </> : <>
+        {selectedTargets.length > 1 ? <p className="muted-copy">Same schedule for all {variants.length ? "targets" : "rooms"}</p> : null}
+        {!editingSharedSchedule ? <div className="parent-schedule-row"><div><strong>{formatRecurrence(schedule)}</strong><p>Starts {formatMonthDay(schedule.anchorDate as DateOnly)}</p></div><button className="icon-button parent-schedule-row__edit" type="button" aria-label="Edit shared schedule" onClick={() => setEditingSharedSchedule(true)}><Pencil aria-hidden="true" size={16} /></button></div> : <><p className="muted-copy">Saving will apply this schedule to all selected targets.</p><ScheduleFields value={schedule} onChange={setSchedule} errors={state.fieldErrors} />{selectedTargets.length > 1 ? <button type="button" className="app-button app-button--tertiary" onClick={() => { setCustomize(true); setSchedules(initialSchedules); setEditingSharedSchedule(false); }}>Keep custom schedules</button> : null}</>}
+        {selectedTargets.length > 1 && !editingSharedSchedule ? <button type="button" className="app-button app-button--secondary" onClick={() => { setSchedules(Object.fromEntries(selectedTargets.map((target) => [targetKey(target), schedule]))); setCustomize(true); }}>Customize schedule by {variants.length ? "target" : "room"}</button> : null}
+      </>}
     </Card>
     <Card className="chore-form__section"><div className="field-stack">
       <label className="field-label" htmlFor="chore-notes">Notes (optional)</label>

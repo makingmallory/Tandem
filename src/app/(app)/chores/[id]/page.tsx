@@ -1,4 +1,3 @@
-import { Pencil } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ChoreIcon } from "@/components/chore/ChoreIcon";
@@ -21,7 +20,9 @@ import { getCurrentUser } from "@/data/auth/queries";
 import { getPersonalChoreReminders } from "@/data/reminders/queries";
 import { ReminderForm } from "@/components/reminder/ReminderForm";
 import { CategoryTargetForm } from "@/components/chore/CategoryTargetForm";
-import { updateCategoryTargetAction } from "@/actions/chores";
+import { InlineScheduleEditor } from "@/components/chore/InlineScheduleEditor";
+import { StandaloneChoreDetailsEditor } from "@/components/chore/StandaloneChoreDetailsEditor";
+import { updateCategoryTargetAction, updateChoreAction, updateChoreScheduleAction } from "@/actions/chores";
 
 export default async function ChoreDetailsPage({
   params,
@@ -55,11 +56,6 @@ export default async function ChoreDetailsPage({
       title={kind === "category" ? "Category Details" : "Chore Details"}
       variant="detail"
       backHref="/chores"
-      actions={!chore.retired_at && !categoryTarget ?
-        <Link className="icon-button" href={`/chores/${chore.id}/edit`} aria-label={`Edit ${chore.name}`}>
-          <Pencil aria-hidden="true" size={19} />
-        </Link> : undefined
-      }
     >
       <div className="page-stack">
         <Card className="chore-hero" tinted>
@@ -73,56 +69,16 @@ export default async function ChoreDetailsPage({
           </div>
         </Card>
 
-        {categoryTarget && !chore.retired_at && routine ? <>
-          <CategoryTargetForm action={updateCategoryTargetAction.bind(null, chore.id)}
+        {!chore.retired_at ? <>
+          {categoryTarget && routine ? <CategoryTargetForm action={updateCategoryTargetAction.bind(null, chore.id)}
             initialSchedule={{ recurrenceType: chore.recurrence_type, intervalCount: chore.interval_count, anchorDate: chore.anchor_date,
               weekdays: chore.weekdays ?? [], dayOfMonth: chore.day_of_month ?? 1 }}
-            subtasks={routine.subtasks} initialApplicableSubtaskIds={routine.subtasks.filter((subtask) => !excludedSubtasks.has(subtask.id)).map((subtask) => subtask.id)} />
-          <Card className="target-settings__section"><ReminderForm compact
-            choreId={chore.id} reminders={reminder} fallbackTimeZone={HOUSEHOLD_TIME_ZONE}
-            recurrenceType={chore.recurrence_type} intervalCount={chore.interval_count} /></Card>
-          <Link className="app-button app-button--secondary target-settings__parent-link" href={`/chores/${chore.id}/edit`}>Edit category &amp; targets</Link>
-        </> : !chore.retired_at ? <>
-          <Card>
-          <ReminderForm
-            choreId={chore.id}
-            reminders={reminder}
-            fallbackTimeZone={HOUSEHOLD_TIME_ZONE}
-            recurrenceType={chore.recurrence_type}
-            intervalCount={chore.interval_count}
-          />
-          </Card>
-
-          <Card className="definition-card">
-          <div>
-            <p className="eyebrow">Schedule</p>
-            <p className="definition-card__value">{recurrence}</p>
-            <p className="muted-copy">Starts {formatMonthDay(chore.anchor_date as DateOnly)}</p>
-          </div>
-          <div>
-            <p className="eyebrow">Notes</p>
-            <p className={chore.description ? "definition-card__value" : "muted-copy"}>
-              {chore.description || "No notes added."}
-            </p>
-          </div>
-          <div>
-            <p className="eyebrow">Room</p>
-            <p className={roomName ? "definition-card__value" : "muted-copy"}>
-              {roomName ?? "No room selected."}
-            </p>
-          </div>
-          </Card>
+            subtasks={routine.subtasks} initialApplicableSubtaskIds={routine.subtasks.filter((subtask) => !excludedSubtasks.has(subtask.id)).map((subtask) => subtask.id)} /> :
+            <InlineScheduleEditor action={updateChoreScheduleAction.bind(null, chore.id)} initialSchedule={{ recurrenceType: chore.recurrence_type, intervalCount: chore.interval_count, anchorDate: chore.anchor_date, weekdays: chore.weekdays ?? [], dayOfMonth: chore.day_of_month ?? 1 }} />}
+          <Card className="target-settings__section"><ReminderForm compact choreId={chore.id} reminders={reminder} fallbackTimeZone={HOUSEHOLD_TIME_ZONE} recurrenceType={chore.recurrence_type} intervalCount={chore.interval_count} /></Card>
+          {!routine ? <StandaloneChoreDetailsEditor action={updateChoreAction.bind(null, chore.id)} initialValues={{ name: chore.name, description: chore.description ?? "", iconKey: chore.icon_key, accentKey: chore.accent_key }} schedule={{ recurrenceType: chore.recurrence_type, intervalCount: chore.interval_count, anchorDate: chore.anchor_date, weekdays: chore.weekdays ?? [], dayOfMonth: chore.day_of_month ?? 1 }} roomName={roomName} /> : null}
+          {routine ? <Link className="app-button app-button--secondary target-settings__parent-link" href={`/chores/${chore.id}/edit`}>Edit {kind === "category" ? "category" : "chore"} &amp; targets</Link> : null}
         </> : <p className="muted-copy">This chore has been removed. Its history is kept.</p>}
-
-        {routine && !categoryTarget && !chore.retired_at ? <Card><details>
-          <summary>{kind === "category" ? "Category" : "Chore"} targets ({routine.targets.length})</summary>
-          <ul className="routine-steps">{routine.targets.map((target) => <li key={target.id}>
-            <Link href={`/chores/${target.id}`}>{[roomContext.rooms.find((room) => room.id === target.room_id)?.name,
-              routine.variants.find((variant) => variant.id === target.variant_id)?.name].filter(Boolean).join(" · ") || "No room or variant"}</Link>
-            {` · ${formatRecurrence({ recurrenceType: target.recurrence_type, intervalCount: target.interval_count, weekdays: target.weekdays, dayOfMonth: target.day_of_month })}`}
-          </li>)}</ul>
-          <Link className="app-button app-button--secondary" href={`/chores/${chore.id}/edit`}>Edit {kind} &amp; targets</Link>
-        </details></Card> : null}
 
         {occurrenceSummary.actionable && !chore.retired_at ? (
           <section className="section-stack" aria-labelledby="current-occurrence-heading">

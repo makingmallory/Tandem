@@ -17,6 +17,7 @@ export default async function EditChorePage({
   const [chore, roomContext] = await Promise.all([getChore(household.id, id), getRoomContext(household.id)]);
   if (!chore || chore.retired_at) notFound();
   const routine = chore.routine_id ? await getRoutineDetails(household.id, chore.routine_id) : null;
+  if (!routine) redirect(`/chores/${chore.id}`);
   const targets = routine?.targets ?? [chore];
   const kind = routine ? routine.routine.kind ?? "category" : "chore";
   const initialTargets = targets.map((target) => ({ roomId: target.room_id ?? null, variantKey: target.variant_id ?? null }));

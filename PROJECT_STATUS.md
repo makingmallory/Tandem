@@ -37,6 +37,8 @@ Tandem is a mobile-first shared-household chore PWA. The repository contains the
 - IMPLEMENTED, not VERIFIED: compact child-target hierarchy and root Category Edit action in Active Chores, plus refined circular Calendar Subtask completion styling.
 - IMPLEMENTED, not VERIFIED: compact icon-only Calendar completion actions; target-scoped Room/Variant editor with target-specific schedule and Subtask applicability editing, backed by incremental migration `20261013100000_phase8_target_scoped_category_editing.sql` and its narrow scoped RPC.
 - IMPLEMENTED, not VERIFIED: consolidated child-target detail and inline edit experience, with compact schedule, Subtask applicability, and personal reminder settings.
+- IMPLEMENTED, not VERIFIED: unified compact chore detail experience for standalone chores and all routine targets, with shared inline schedules and reminder settings; daily reminder editing now explains its due-date-only rule.
+- IMPLEMENTED, not VERIFIED: meaningful compact standalone Details summaries, aligned grouped-parent Edit controls, and parent schedule editing that derives shared or customized state from saved target recurrence definitions.
 - IMPLEMENTED: Fixed the Chores server-render runtime regression by keeping the root Category Edit link outside the native expand/collapse summary; no Client Component boundary was added.
 
 ## Product Invariants

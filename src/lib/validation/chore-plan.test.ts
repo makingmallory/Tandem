@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { parseChorePlan, resolveTargets, targetKey } from "@/lib/validation/chore-plan";
+import { parseChorePlan, resolveTargets, schedulesAreShared, targetKey } from "@/lib/validation/chore-plan";
 import type { DateOnly } from "@/domain/dates/date-only";
+import type { ScheduleValues } from "@/lib/validation/chore-plan";
 const room1 = "81111111-1111-4111-8111-111111111111";
 const room2 = "82222222-2222-4222-8222-222222222222";
-const schedule = { recurrenceType: "weekly", intervalCount: 1, anchorDate: "2026-10-14", weekdays: [3], dayOfMonth: 1 };
+const schedule: ScheduleValues = { recurrenceType: "weekly", intervalCount: 1, anchorDate: "2026-10-14", weekdays: [3], dayOfMonth: 1 };
 function parse(roomIds: string[], customize = false, schedules = {}) {
   const form = new FormData();
   form.set("name", "Clean Bathroom"); form.set("description", ""); form.set("iconKey", "bathtub"); form.set("accentKey", "sky");
@@ -11,6 +12,11 @@ function parse(roomIds: string[], customize = false, schedules = {}) {
   return parseChorePlan(form, "2026-10-12" as DateOnly);
 }
 describe("chore plan generation", () => {
+  it("derives shared schedules from recurrence definitions and normalizes weekday order", () => {
+    expect(schedulesAreShared([{ ...schedule, weekdays: [1, 3] }, { ...schedule, weekdays: [3, 1] }])).toBe(true);
+    expect(schedulesAreShared([schedule, { ...schedule, weekdays: [4] }])).toBe(false);
+    expect(schedulesAreShared([schedule, { ...schedule, anchorDate: "2026-10-15" }])).toBe(false);
+  });
   it("creates independent variant-only targets and never infers a Room + Variant product",()=>{
     const variants=[{id:null,key:room1,name:"Darks"},{id:null,key:room2,name:"Towels"}];
     expect(resolveTargets([],variants,[]).map(targetKey)).toEqual([`variant:${room1}`,`variant:${room2}`]);

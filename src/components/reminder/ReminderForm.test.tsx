@@ -136,6 +136,7 @@ describe("ReminderForm", () => {
     renderForm([], "daily");
     fireEvent.click(screen.getByRole("switch", { name: /Notifications/ }));
     expect(screen.getByText("On the due date")).toBeVisible();
+    expect(screen.getByText("Daily chores use one reminder on the due date.")).toBeVisible();
     expect(screen.queryByRole("button", { name: /Add notification/ })).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/Offset for notification/)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/Remove notification/)).not.toBeInTheDocument();

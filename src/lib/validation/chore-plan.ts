@@ -38,7 +38,11 @@ export function scheduleValues(chore: ChoreRow): ScheduleValues {
 }
 export function sameSchedule(a: ScheduleValues, b: ScheduleValues) {
   return a.recurrenceType === b.recurrenceType && a.intervalCount === b.intervalCount && a.anchorDate === b.anchorDate
-    && a.weekdays.join(",") === b.weekdays.join(",") && a.dayOfMonth === b.dayOfMonth;
+    && [...a.weekdays].sort((left, right) => left - right).join(",") === [...b.weekdays].sort((left, right) => left - right).join(",")
+    && a.dayOfMonth === b.dayOfMonth;
+}
+export function schedulesAreShared(schedules: ScheduleValues[]) {
+  return schedules.length < 2 || schedules.every((schedule) => sameSchedule(schedule, schedules[0]!));
 }
 export function parseChorePlan(formData: FormData, today: DateOnly) {
   let raw: unknown;

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { ChoreForm } from "@/components/chore/ChoreForm";
 import { INITIAL_ACTION_STATE, type ActionState } from "@/actions/state";
 import type { RoomRow } from "@/data/supabase/types";
@@ -28,10 +28,11 @@ describe("ChoreForm rooms and routine editing", () => {
     const { container } = render(<ChoreForm action={action} rooms={rooms} initialValues={values} mode="create" />);
     fireEvent.click(screen.getByLabelText("Master Bathroom"));
     fireEvent.click(screen.getByLabelText("Downstairs Bathroom"));
-    expect(screen.getByRole("button", { name: "Apply same schedule" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Same schedule for all rooms")).toBeVisible();
     expect(screen.getAllByLabelText("Starts")).toHaveLength(1);
-    fireEvent.click(screen.getByRole("button", { name: "Customize schedule by room" }));
-    const room = screen.getByText("Downstairs Bathroom", { selector: "summary" }).parentElement!;
+    fireEvent.click(screen.getByRole("button", { name: "Keep custom schedules" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit schedule for Downstairs Bathroom" }));
+    const room = screen.getByText("Downstairs Bathroom", { selector: "strong" }).parentElement!.parentElement!;
     fireEvent.click(within(room).getByLabelText("Wednesday"));
     fireEvent.click(within(room).getByLabelText("Thursday"));
     const plan = serialized(container);
@@ -39,16 +40,18 @@ describe("ChoreForm rooms and routine editing", () => {
     expect(plan.schedules[rooms[1]!.id].weekdays).toEqual([4]);
     expect(screen.getByLabelText("Kitchen")).not.toBeChecked();
   });
-  it("preserves different existing schedules when editing and confirms switching to one shared schedule", () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-    render(<ChoreForm action={action} rooms={rooms} initialValues={values} mode="edit"
+  it("opens differing saved schedules in customized mode and only enters shared conversion locally", () => {
+    const { container } = render(<ChoreForm action={action} rooms={rooms} initialValues={values} mode="edit"
       initialRoomIds={rooms.slice(0, 2).map((room) => room.id)}
       initialSchedules={{ [rooms[0]!.id]: values, [rooms[1]!.id]: { ...values, weekdays: [4] } }} />);
-    expect(screen.getByRole("button", { name: "Customize schedule by room" })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Apply same schedule" }));
-    expect(confirm).toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Customize schedule by room" })).toHaveAttribute("aria-pressed", "true");
-    confirm.mockRestore();
+    expect(screen.getByText("Custom schedules")).toBeVisible();
+    expect(screen.getAllByText("Master Bathroom")).toHaveLength(2);
+    expect(screen.getByText("Every Wednesday · Starts Oct 14")).toBeVisible();
+    expect(screen.getByText("Every Thursday · Starts Oct 14")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Convert to same schedule" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Convert to same schedule" }));
+    expect(screen.getByText(/Saving will apply this schedule/)).toBeVisible();
+    expect(serialized(container).customize).toBe(false);
   });
   it("supports adding, renaming, reordering and removing shared instructions", () => {
     const { container } = render(<ChoreForm action={action} rooms={rooms} initialValues={values} mode="edit" kind="category"

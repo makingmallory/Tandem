@@ -20,6 +20,7 @@ describe("RoutineGroup", () => {
     expect(screen.getByText("Clean Bathroom").closest("details")).not.toHaveAttribute("open");
     fireEvent.click(screen.getByText("Clean Bathroom"));
     expect(screen.getByRole("link", { name: "Edit Clean Bathroom" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Edit Clean Bathroom" })).toHaveClass("routine-group__edit");
     const targets = screen.getByLabelText("Clean Bathroom targets");
     expect(within(targets).getByRole("link", { name: /Upstairs Bathroom/ })).toHaveAttribute("href", "/chores/target-1");
     expect(within(targets).getByRole("link", { name: /Downstairs Bathroom/ })).toHaveAttribute("href", "/chores/target-2");
