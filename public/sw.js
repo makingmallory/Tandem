@@ -37,8 +37,17 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const target = new URL(event.notification.data?.url ?? "/", self.location.origin);
-  if (target.origin !== self.location.origin) target.pathname = "/";
+  const fallback = new URL("/", self.location.origin);
+  let target = fallback;
+  try {
+    const value = event.notification.data?.url;
+    if (typeof value === "string" && value.startsWith("/")) {
+      const candidate = new URL(value, self.location.origin);
+      if (candidate.origin === self.location.origin) target = candidate;
+    }
+  } catch {
+    target = fallback;
+  }
   event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
     const existing = clients.find((client) => new URL(client.url).origin === self.location.origin);
     return existing ? existing.focus().then(() => existing.navigate(target.href)) : self.clients.openWindow(target.href);

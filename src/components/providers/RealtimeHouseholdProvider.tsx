@@ -55,6 +55,7 @@ export function RealtimeHouseholdProvider({
 
   useEffect(() => {
     let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+    let subscribedOnce = false;
     const invalidateSharedData = () => Promise.all([
       queryClient.invalidateQueries({ queryKey: choreKeys.household(householdId) }),
       queryClient.invalidateQueries({ queryKey: occurrenceKeys.household(householdId) }),
@@ -81,7 +82,11 @@ export function RealtimeHouseholdProvider({
         refreshSharedData,
       );
     }
-    channel.subscribe();
+    channel.subscribe((status) => {
+      if (status !== "SUBSCRIBED") return;
+      if (subscribedOnce) refreshSharedData();
+      subscribedOnce = true;
+    });
 
     return () => {
       if (refreshTimer) clearTimeout(refreshTimer);

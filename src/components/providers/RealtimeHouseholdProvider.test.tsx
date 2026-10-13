@@ -6,13 +6,14 @@ import { RealtimeHouseholdProvider, useLocalHouseholdMutation } from "@/componen
 const refresh = vi.fn();
 const removeChannel = vi.fn();
 const subscribe = vi.fn();
+let subscriptionStatus: ((status: string) => void) | undefined;
 const handlers: Array<() => void> = [];
 const channel = {
   on: vi.fn((_kind, _filter, handler: () => void) => {
     handlers.push(handler);
     return channel;
   }),
-  subscribe,
+  subscribe: (callback?: (status: string) => void) => { subscriptionStatus = callback; subscribe(); },
 };
 const supabase = { channel: vi.fn(() => channel), removeChannel };
 
@@ -33,6 +34,7 @@ describe("RealtimeHouseholdProvider", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     handlers.length = 0;
+    subscriptionStatus = undefined;
     vi.clearAllMocks();
   });
 
@@ -89,5 +91,16 @@ describe("RealtimeHouseholdProvider", () => {
       expect(channel.on).toHaveBeenCalledWith("postgres_changes",{event:"*",schema:"public",table,filter:"household_id=eq.home-1"},expect.any(Function));
     }
     view.unmount();vi.useRealTimers();
+  });
+  it("invalidates and refreshes once after a realtime reconnect", async () => {
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    render(<QueryClientProvider client={queryClient}><RealtimeHouseholdProvider householdId="home-1"><span>Household</span></RealtimeHouseholdProvider></QueryClientProvider>);
+    subscriptionStatus?.("SUBSCRIBED");
+    subscriptionStatus?.("SUBSCRIBED");
+    await act(async () => vi.advanceTimersByTimeAsync(80));
+    expect(invalidate).toHaveBeenCalledTimes(4);
+    expect(refresh).toHaveBeenCalledOnce();
+    vi.useRealTimers();
   });
 });

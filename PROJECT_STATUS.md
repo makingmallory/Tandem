@@ -4,8 +4,7 @@
 
 - GitHub: <https://github.com/makingmallory/Tandem>
 - Default branch: `main` (tracking `origin/main`)
-- Current HEAD: `cac7bb9e55bbf2175876792c4c99bc52aa80e108` — `Complete Tandem Phase 7 visual refinement`
-- Working tree: clean immediately before this file was added. `PROJECT_STATUS.md` is intentionally uncommitted for review.
+- Current HEAD is the Phase 7 visual-refinement checkpoint; the working tree also contains uncommitted, implemented Phase 8 work.
 
 ## Current Development State
 
@@ -112,7 +111,7 @@ npm run db:lint
 
 ## Current / Next Work
 
-- IMPLEMENTED, not VERIFIED: Suggested Chores / Starter Categories browser, static initial starter catalog, preview, and existing-form prefill/import flow. Area filtering/grouping remains PLANNED.
+- Phase 9 is current work: scheduled-push confidence, notification-tap routing, Realtime recovery, and focused collaboration coverage. See `docs/PHASE9_PRODUCTION_CONFIDENCE.md` for manual production checks.
 
 Production configuration and real-device PWA/push/realtime validation also remain pending; see the setup documentation in `docs/`.
 
